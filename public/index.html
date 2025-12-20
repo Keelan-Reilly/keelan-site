@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+	<meta name="generator" content="Hugo 0.153.0"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>
+  Keelan Reilly
+</title>
+
+<link rel="stylesheet" href="/css/main.min.css">
+  </head>
+  <body>
+    <div class="wrap">
+      
+        <header class="siteHeader">
+  <h1 class="name"><a class="plain" href="/">Keelan Reilly</a></h1>
+  <p class="about">
+    Electronic Engineering student interested in FPGA design, low-latency digital systems, and ML inference hardware.
+    This site is a running write-up of projects where I’ve built and verified systems end-to-end.
+  </p>
+  <nav class="navrow">
+    <a href="https://github.com/Keelan-Reilly">GitHub</a>
+    <span>·</span>
+    <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296">LinkedIn</a>
+  </nav>
+</header>
+<hr class="rule" />
+      
+      <main>
+        
+  <h2 class="sectionTitle">Projects</h2>
+  
+
+  <div class="cards">
+    
+      <article class="card">
+        <div class="cardTop">
+          <h3 class="cardTitle"><a href="/cnn-accelerator/">Quantised CNN Inference Accelerator</a></h3>
+          
+        </div>
+
+        <p class="muted">This project implements a complete CNN inference pipeline in SystemVerilog. I built it to understand the tradeoffs of fixed-function hardware accelerators: the performance gains they deliver, and the flexibility they give up when data movement, arithmetic precision, and control timing are handled explicitly in hardware.</p>
+
+        
+          <div class="kpis">
+            
+              <div class="kpi">
+                <div class="kpiLabel">Compute latency (frame loaded → TX start)</div>
+                <div class="kpiValue">~466k cycles</div>
+                <div class="kpiNote">≈ 4.7 ms @ 100 MHz</div>
+              </div>
+            
+              <div class="kpi">
+                <div class="kpiLabel">End-to-end latency (UART RX &#43; compute &#43; UART TX)</div>
+                <div class="kpiValue">~7.28M cycles</div>
+                <div class="kpiNote">≈ 73 ms @ 115,200 baud</div>
+              </div>
+            
+              <div class="kpi">
+                <div class="kpiLabel">MNIST accuracy</div>
+                <div class="kpiValue">~92.2%</div>
+                <div class="kpiNote">Float baseline: ~94.3% (1 epoch)</div>
+              </div>
+            
+          </div>
+        
+      </article>
+    
+  </div>
+
+      </main>
+      <footer class="siteFooter">© 2025 Keelan Reilly</footer>
+    </div>
+  </body>
+</html>

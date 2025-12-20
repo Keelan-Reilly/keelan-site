@@ -1,0 +1,29 @@
+{{ define "main" }}
+  <h2 class="sectionTitle">{{ .Title }}</h2>
+  {{ if .Content }}<div class="lead">{{ .Content }}</div>{{ end }}
+
+  <div class="cards">
+    {{ range .Pages.ByDate.Reverse }}
+      <article class="card">
+        <div class="cardTop">
+          <h3 class="cardTitle"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+          {{ with .Params.stack }}<div class="muted">{{ . }}</div>{{ end }}
+        </div>
+
+        {{ with .Params.summary }}<p class="muted">{{ . }}</p>{{ end }}
+
+        {{ with .Params.kpis }}
+          <div class="kpis">
+            {{ range . }}
+              <div class="kpi">
+                <div class="kpiLabel">{{ .label }}</div>
+                <div class="kpiValue">{{ .value }}</div>
+                {{ with .note }}<div class="kpiNote">{{ . }}</div>{{ end }}
+              </div>
+            {{ end }}
+          </div>
+        {{ end }}
+      </article>
+    {{ end }}
+  </div>
+{{ end }}

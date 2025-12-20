@@ -1,0 +1,26 @@
+{{ define "main" }}
+  <article class="single">
+    <h2 class="sectionTitle">{{ .Title }}</h2>
+    {{ with .Params.stack }}<p class="muted">{{ . }}</p>{{ end }}
+
+    {{ with .Params.kpis }}
+      <div class="kpis kpisWide">
+        {{ range . }}
+          <div class="kpi">
+            <div class="kpiLabel">{{ .label }}</div>
+            <div class="kpiValue">{{ .value }}</div>
+            {{ with .note }}<div class="kpiNote">{{ . }}</div>{{ end }}
+          </div>
+        {{ end }}
+      </div>
+    {{ end }}
+
+    <div class="content">
+      {{ .Content }}
+    </div>
+
+    {{ with .Params.repo }}
+      <p class="muted">Source: <a href="{{ . }}">{{ . }}</a></p>
+    {{ end }}
+  </article>
+{{ end }}
