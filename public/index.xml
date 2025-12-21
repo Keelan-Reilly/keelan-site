@@ -9,6 +9,13 @@
     <lastBuildDate>Sat, 20 Dec 2025 00:00:00 +0000</lastBuildDate>
     <atom:link href="//localhost:1313/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>FPGA Market Data Parser (Low-Latency Pipeline)</title>
+      <link>//localhost:1313/market_data_parser/</link>
+      <pubDate>Sat, 20 Dec 2025 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/market_data_parser/</guid>
+      <description>This project implements a low-latency market data ingestion pipeline in SystemVerilog. I built it to understand how protocol handling, backpressure, and control timing shape end-to-end latency in real hardware pipelines.</description>
+    </item>
+    <item>
       <title>Quantised CNN Inference Accelerator</title>
       <link>//localhost:1313/cnn-accelerator/</link>
       <pubDate>Sat, 20 Dec 2025 00:00:00 +0000</pubDate>

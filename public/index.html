@@ -67,6 +67,39 @@
         
       </article>
     
+      <article class="card">
+        <div class="cardTop">
+          <h3 class="cardTitle"><a href="/market_data_parser/">FPGA Market Data Parser (Low-Latency Pipeline)</a></h3>
+          
+        </div>
+
+        <p class="muted">This project implements a low-latency market data ingestion pipeline in SystemVerilog. I built it to understand how protocol handling, backpressure, and control timing shape end-to-end latency in real hardware pipelines.</p>
+
+        
+          <div class="kpis">
+            
+              <div class="kpi">
+                <div class="kpiLabel">End-to-end latency (ingress → decision)</div>
+                <div class="kpiValue">~38 cycles</div>
+                <div class="kpiNote">≈ 152 ns @ 250 MHz (simulation)</div>
+              </div>
+            
+              <div class="kpi">
+                <div class="kpiLabel">Clock target</div>
+                <div class="kpiValue">250 MHz</div>
+                <div class="kpiNote">Closed with positive slack in Vivado</div>
+              </div>
+            
+              <div class="kpi">
+                <div class="kpiLabel">Verification</div>
+                <div class="kpiValue">Cycle-accurate</div>
+                <div class="kpiNote">Verilator &#43; Python reference models</div>
+              </div>
+            
+          </div>
+        
+      </article>
+    
   </div>
 
       </main>

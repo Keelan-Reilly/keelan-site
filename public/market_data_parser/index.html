@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>
+  FPGA Market Data Parser (Low-Latency Pipeline) — Keelan Reilly
+</title>
+
+<link rel="stylesheet" href="/css/main.min.css">
+  </head>
+  <body>
+    <div class="wrap">
+      
+      <main>
+        
+  <article class="single">
+    <h2 class="sectionTitle">FPGA Market Data Parser (Low-Latency Pipeline)</h2>
+    
+
+    
+      <div class="kpis kpisWide">
+        
+          <div class="kpi">
+            <div class="kpiLabel">End-to-end latency (ingress → decision)</div>
+            <div class="kpiValue">~38 cycles</div>
+            <div class="kpiNote">≈ 152 ns @ 250 MHz (simulation)</div>
+          </div>
+        
+          <div class="kpi">
+            <div class="kpiLabel">Clock target</div>
+            <div class="kpiValue">250 MHz</div>
+            <div class="kpiNote">Closed with positive slack in Vivado</div>
+          </div>
+        
+          <div class="kpi">
+            <div class="kpiLabel">Verification</div>
+            <div class="kpiValue">Cycle-accurate</div>
+            <div class="kpiNote">Verilator &#43; Python reference models</div>
+          </div>
+        
+      </div>
+    
+
+    <div class="content">
+      <h2 id="introduction">Introduction</h2>
+<p>Unlike arithmetic-heavy accelerators, protocol-facing hardware is dominated by control flow, state, and timing constraints. Bytes arrive sequentially, fields are interdependent, and downstream stalls must be handled without losing or duplicating data. Latency is shaped less by computation than by how early decisions can be made and how cleanly backpressure propagates.</p>
+<p>This project explores those constraints by implementing a complete market-data ingestion pipeline on FPGA: Ethernet framing, CRC verification, ITCH message parsing, and a simple decision stage. The focus is not trading strategy, but the mechanics of building a lossless, latency-aware hardware pipeline.</p>
+<h2 id="system-behaviour">System behaviour</h2>
+<p>The system consumes an Ethernet byte stream, detects valid frames, verifies CRC-32, filters destination MAC addresses, and streams ITCH payload bytes into a parser. For trade (‘P’) messages, selected fields are extracted and dispatched to a small decision block. Decisions are emitted over a UART interface.</p>
+<p>The entire pipeline is built around explicit valid/ready handshakes. No data is dropped, duplicated, or reordered under backpressure.</p>
+<h2 id="pipeline-structure">Pipeline structure</h2>
+<p>The design is organised as a sequence of narrowly scoped stages:</p>
+<ul>
+<li>Ethernet RX with preamble/SFD detection, MAC filtering, and CRC-32 verification</li>
+<li>ITCH parser with early dispatch on the final price byte</li>
+<li>One-deep registered boundaries between stages to isolate timing and propagate stalls</li>
+<li>A minimal decision block that emits results when conditions are met</li>
+</ul>
+<p>Skid buffers are used where fall-through behaviour is safe; registered slices are used where timing isolation is required.</p>
+<h2 id="early-dispatch-and-latency">Early dispatch and latency</h2>
+<p>A key optimisation is early dispatch in the parser. Rather than waiting for the full ITCH message to drain, the parser asserts a valid event on the cycle the final price byte arrives. This allows the decision stage to trigger immediately, without bubbles between parsing and logic.</p>
+<p>At 250 MHz, the resulting end-to-end latency from message ingress to decision availability is 38 cycles (≈ 152 ns) in simulation.</p>
+<h2 id="backpressure-and-correctness">Backpressure and correctness</h2>
+<p>Every interface in the pipeline honours backpressure. If the UART stage stalls, decisions are buffered and upstream stages naturally pause without losing alignment. The design was intentionally stress-tested with periodic sink stalls to ensure correctness under non-ideal conditions.</p>
+<p>Several early bugs only appeared once realistic backpressure and multi-cycle delays were introduced, reinforcing the importance of protocol-accurate handshakes even in simple pipelines.</p>
+<h2 id="verification">Verification</h2>
+<p>Verification is cycle-accurate and protocol-focused. A C++ Verilator harness replays real packet traces, injects controlled stalls, and records timestamps at each pipeline boundary. Python reference models independently parse packets, recompute CRCs, and validate extracted fields.</p>
+<p>Correctness is defined structurally as well as functionally: stable outputs during stalls, one-to-one correspondence between input messages and output events, and monotonic timestamps.</p>
+<h2 id="what-this-establishes">What this establishes</h2>
+<p>This project demonstrates how low latency in hardware is primarily a control problem. The dominant challenges are not arithmetic throughput, but deciding <em>when</em> information becomes actionable, how long it must be retained, and how stalls propagate without corrupting state.</p>
+
+    </div>
+
+    
+      <p class="muted">Source: <a href="https://github.com/Keelan-Reilly/low_latency_market_parser">https://github.com/Keelan-Reilly/low_latency_market_parser</a></p>
+    
+  </article>
+
+      </main>
+      <footer class="siteFooter">© 2025 Keelan Reilly</footer>
+    </div>
+  </body>
+</html>
