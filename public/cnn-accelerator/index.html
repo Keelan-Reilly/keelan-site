@@ -44,21 +44,19 @@
 
     <div class="content">
       <h1 id="quantised-cnn-inference-accelerator">Quantised CNN Inference Accelerator</h1>
-<p>This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.<br>
-The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU: explicit scheduling, explicit memory movement, fixed arithmetic, and deterministic latency.</p>
+<p>This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.</p>
+<p>The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU: explicit scheduling, explicit memory movement, fixed arithmetic, and deterministic latency.</p>
 <p>The accelerator receives an MNIST image over UART, processes it through a fully hardware pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.</p>
 <p>The project explores two questions:</p>
 <ul>
 <li>What engineering challenges appear when implementing an inference pipeline directly in RTL?</li>
 <li>How do architectural choices affect performance, area, and timing once the design is synthesised?</li>
 </ul>
-<hr>
 <h1 id="system-overview">System Overview</h1>
-<p>The system receives a <strong>28×28 grayscale image</strong> over UART and processes it through a fixed pipeline:
-&lsquo;convolution → ReLU → max-pool → dense → argmax → UART transmit&rsquo;</p>
+<p>The system receives a <strong>28×28 grayscale image</strong> over UART and processes it through a fixed pipeline:</p>
+<p><code>convolution → ReLU → max-pool → dense → argmax → UART transmit</code></p>
 <p>Once a frame is loaded, the accelerator runs autonomously until the classification result is produced.</p>
 <p>There is no control processor or software runtime. Instead, each stage is implemented as a hardware module with explicit control signals and deterministic memory access patterns.</p>
-<hr>
 <h1 id="pipeline-control">Pipeline Control</h1>
 <p>The pipeline is organised as a sequence of stages controlled by a top-level FSM.</p>
 <p>Each stage exposes a simple protocol:</p>
@@ -69,25 +67,21 @@ The goal was to study what changes when neural network inference is implemented 
 </ul>
 <p>While active, a stage has exclusive ownership of its input and output memories. This design avoids ambiguity when memory latency exceeds a single cycle and makes stage boundaries explicit during verification.</p>
 <p>The resulting architecture is <strong>sequential rather than pipelined</strong>: stages execute one after another rather than overlapping.</p>
-<hr>
 <h1 id="memory-organisation">Memory Organisation</h1>
 <p>Feature maps are stored in BRAM-backed memories using a simple <strong>channel-height-width (CHW) linear layout</strong>.</p>
-<p>Address generation is entirely deterministic and driven by counters.<br>
-Every output location is written exactly once.</p>
-<p>This layout prioritises <strong>observability and verifiability</strong> over maximum efficiency.<br>
-Early bugs occurred when writes were issued one cycle too early or late, producing outputs that looked numerically plausible but were incorrect. The final design enforces:</p>
+<p>Address generation is entirely deterministic and driven by counters.</p>
+<p>Every output location is written exactly once.</p>
+<p>This layout prioritises <strong>observability and verifiability</strong> over maximum efficiency. Early bugs occurred when writes were issued one cycle too early or late, producing outputs that looked numerically plausible but were incorrect. The final design enforces:</p>
 <ul>
 <li>write-once semantics</li>
 <li>strict address sequencing</li>
 <li>completion invariants verified in simulation</li>
 </ul>
-<hr>
 <h1 id="fixed-point-arithmetic">Fixed-Point Arithmetic</h1>
 <p>All arithmetic uses signed fixed-point representation.</p>
 <p>Inputs are quantised using lookup tables, while weights and biases are stored as signed constants. Multiply-accumulate operations use widened accumulators to absorb dynamic range growth before scaling and saturation back to the output width.</p>
 <p>The hardware behaviour is mirrored bit-for-bit in a reference model used during verification. Approximate agreement is insufficient — the RTL must exactly match the fixed-point semantics.</p>
 <p>The resulting design achieves <strong>92.2% MNIST accuracy</strong>, compared to <strong>94.3%</strong> for a simple floating-point PyTorch model trained for one epoch.</p>
-<hr>
 <h1 id="stage-implementation-details">Stage Implementation Details</h1>
 <h3 id="convolution">Convolution</h3>
 <p>The convolution stage implements SAME padding and iterates explicitly over channels and kernel taps. Data is fetched from BRAM through an interface with configurable latency.</p>
@@ -99,7 +93,6 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
 <p>Max-pool reads four values per output element and performs signed comparisons. While functionally simple, addressing errors are easy to introduce. The testbench therefore asserts the exact read sequence for every pooling window.</p>
 <h3 id="dense-and-argmax">Dense and Argmax</h3>
 <p>The dense stage performs multiply-accumulate operations over the flattened feature map, followed by scaling and saturation. Argmax selects the highest output value with deterministic tie-breaking behaviour.</p>
-<hr>
 <h1 id="verification">Verification</h1>
 <p>Verification is <strong>protocol-driven rather than output-driven</strong>.</p>
 <p>Each module has its own testbench consisting of:</p>
@@ -117,10 +110,9 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
 </ul>
 <p>are treated as fatal errors even if the final numerical output appears correct.</p>
 <p>Full-system verification uses <strong>Verilator</strong> for cycle-accurate simulation.</p>
-<hr>
 <h1 id="performance">Performance</h1>
-<p>The compute pipeline requires roughly:
-&lsquo;465,732 cycles @ 100 MHz ≈ 4.7 ms&rsquo;</p>
+<p>The compute pipeline requires roughly:</p>
+<p><code>465,732 cycles @ 100 MHz ≈ 4.7 ms</code></p>
 <p>Stage-level cycle counters show where time is spent:</p>
 <table>
   <thead>
@@ -160,7 +152,6 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
 </table>
 <p>This baseline stage breakdown motivated the later architecture study, since it immediately suggested that convolution rather than dense was the dominant bottleneck.</p>
 <p>End-to-end latency including UART I/O is approximately <strong>73 ms</strong>, meaning communication dominates total runtime.</p>
-<hr>
 <h1 id="architecture-experiments">Architecture Experiments</h1>
 <p>After validating the accelerator, a series of experiments were run to study architectural trade-offs.</p>
 <p>Experiments are automated using a batch flow that collects:</p>
@@ -170,11 +161,10 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
 <li>per-stage cycle counters</li>
 </ul>
 <p>Results are stored in <code>results/fpga/aggregates</code>.</p>
-<hr>
 <h1 id="dense-parallelism-scaling">Dense Parallelism Scaling</h1>
-<p>The main experiment varies the dense layer parallelism parameter:
-&lsquo;DENSE_OUT_PAR = {1, 2, 5, 10}&rsquo;</p>
-<p><img src="figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png" alt="Stage cycle breakdown vs dense parallelism"></p>
+<p>The main experiment varies the dense layer parallelism parameter:</p>
+<p><code>DENSE_OUT_PAR = {1, 2, 5, 10}</code></p>
+<p><img src="/figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png" alt="Stage cycle breakdown vs dense parallelism"></p>
 <p><em>Stage cycle breakdown showing that convolution remains constant while dense latency decreases with parallelism.</em></p>
 <p>Dense stage latency scales almost ideally:</p>
 <table>
@@ -223,7 +213,7 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
   </tbody>
 </table>
 <p>This corresponds to only <strong>~1.14× end-to-end speedup</strong>.</p>
-<p><img src="figures/latency_cycles_vs_DENSE_OUT_PAR.png" alt="Latency vs dense parallelism"></p>
+<p><img src="/figures/latency_cycles_vs_DENSE_OUT_PAR.png" alt="Latency vs dense parallelism"></p>
 <p><em>Total latency decreases only modestly because the convolution stage dominates runtime.</em></p>
 <p>The reason is visible in the stage breakdown: convolution remains constant at ~345k cycles and dominates the total runtime.</p>
 <p>Increasing dense parallelism therefore accelerates the dense block but quickly leaves the system <strong>convolution-bound</strong>.</p>
@@ -250,13 +240,12 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
   </tbody>
 </table>
 <p>The result demonstrates a common accelerator design lesson: <strong>local block speedups do not necessarily translate into global system speedups</strong>.</p>
-<hr>
 <h1 id="precision-vs-resource-study">Precision vs Resource Study</h1>
 <p>A second experiment varies arithmetic precision while keeping the architecture fixed.</p>
-<p>Formats tested:
-&lsquo;Q12.5&rsquo;
-&lsquo;Q14.6&rsquo;
-&lsquo;Q16.7&rsquo;</p>
+<p>Formats tested:</p>
+<p><code>Q12.5</code><br>
+<code>Q14.6</code><br>
+<code>Q16.7</code></p>
 <p>Latency remains constant across all formats because the controller schedule does not change. The primary effect is implementation cost:</p>
 <table>
   <thead>
@@ -283,19 +272,17 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
   </tbody>
 </table>
 <p>This confirms that precision changes primarily affect <strong>area and timing</strong>, not the accelerator&rsquo;s cycle schedule.</p>
-<hr>
 <h1 id="analytical-latency-model">Analytical Latency Model</h1>
 <p>A simple analytical model was implemented to predict latency.</p>
-<p>Because the architecture is sequential, total latency can be decomposed into:
-&rsquo;total_latency = fixed_frontend + dense_stage'
-The fixed term includes:
-&lsquo;conv + ReLU + pool + argmax + control overhead ≈ 403k cycles&rsquo;</p>
-<p>The dense term depends on parallelism:
-&lsquo;dense_cycles = ceil(NUM_CLASSES / DENSE_OUT_PAR) × work_per_output&rsquo;</p>
+<p>Because the architecture is sequential, total latency can be decomposed into:</p>
+<p><code>total_latency = fixed_frontend + dense_stage</code></p>
+<p>The fixed term includes:</p>
+<p><code>conv + ReLU + pool + argmax + control overhead ≈ 403k cycles</code></p>
+<p>The dense term depends on parallelism:</p>
+<p><code>dense_cycles = ceil(NUM_CLASSES / DENSE_OUT_PAR) × work_per_output</code></p>
 <p>For the dense-parallelism sweep, this model matches measured latency exactly, demonstrating that the accelerator&rsquo;s behaviour is well explained by a simple stage-level decomposition.</p>
-<p><img src="figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png" alt="Measured vs predicted latency"></p>
+<p><img src="/figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png" alt="Measured vs predicted latency"></p>
 <p><em>Measured latency matches the analytical latency model across the dense parallelism sweep.</em></p>
-<hr>
 <h1 id="key-takeaways">Key Takeaways</h1>
 <p>This project illustrates the trade-offs inherent in fixed-function hardware acceleration.</p>
 <p>Hard-wiring decisions about:</p>

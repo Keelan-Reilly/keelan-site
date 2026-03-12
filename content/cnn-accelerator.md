@@ -157,7 +157,7 @@ The main experiment varies the dense layer parallelism parameter:
 
 `DENSE_OUT_PAR = {1, 2, 5, 10}`
 
-![Stage cycle breakdown vs dense parallelism](/content/figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png)
+![Stage cycle breakdown vs dense parallelism](/figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png)
 
 *Stage cycle breakdown showing that convolution remains constant while dense latency decreases with parallelism.*
 
@@ -179,7 +179,7 @@ However, total accelerator latency improves only modestly:
 
 This corresponds to only **~1.14× end-to-end speedup**.
 
-![Latency vs dense parallelism](/content/figures/latency_cycles_vs_DENSE_OUT_PAR.png)
+![Latency vs dense parallelism](/figures/latency_cycles_vs_DENSE_OUT_PAR.png)
 
 *Total latency decreases only modestly because the convolution stage dominates runtime.*
 
@@ -233,7 +233,7 @@ The dense term depends on parallelism:
 
 For the dense-parallelism sweep, this model matches measured latency exactly, demonstrating that the accelerator's behaviour is well explained by a simple stage-level decomposition.
 
-![Measured vs predicted latency](/content/figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png)
+![Measured vs predicted latency](/figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png)
 
 *Measured latency matches the analytical latency model across the dense parallelism sweep.*
 
