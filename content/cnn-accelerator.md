@@ -16,8 +16,6 @@ kpis:
     note: "Float baseline: ~94.3% (1 epoch)"
 ---
 
-# Quantised CNN Inference Accelerator
-
 This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.
 
 The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU.

@@ -63,8 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
 
     <div class="content">
-      <h1 id="quantised-cnn-inference-accelerator">Quantised CNN Inference Accelerator</h1>
-<p>This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.</p>
+      <p>This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.</p>
 <p>The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU.</p>
 <p>The accelerator receives an MNIST image over UART, processes it through a fully hardware pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.</p>
 <p>The project explores two questions:</p>
