@@ -17,7 +17,8 @@ kpis:
 
 # Quantised CNN Inference Accelerator
 
-This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.  
+This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.
+
 The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU: explicit scheduling, explicit memory movement, fixed arithmetic, and deterministic latency.
 
 The accelerator receives an MNIST image over UART, processes it through a fully hardware pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.
@@ -27,18 +28,15 @@ The project explores two questions:
 - What engineering challenges appear when implementing an inference pipeline directly in RTL?
 - How do architectural choices affect performance, area, and timing once the design is synthesised?
 
----
-
 # System Overview
 
 The system receives a **28×28 grayscale image** over UART and processes it through a fixed pipeline:
-'convolution → ReLU → max-pool → dense → argmax → UART transmit'
+
+`convolution → ReLU → max-pool → dense → argmax → UART transmit`
 
 Once a frame is loaded, the accelerator runs autonomously until the classification result is produced.
 
 There is no control processor or software runtime. Instead, each stage is implemented as a hardware module with explicit control signals and deterministic memory access patterns.
-
----
 
 # Pipeline Control
 
@@ -54,23 +52,19 @@ While active, a stage has exclusive ownership of its input and output memories. 
 
 The resulting architecture is **sequential rather than pipelined**: stages execute one after another rather than overlapping.
 
----
-
 # Memory Organisation
 
 Feature maps are stored in BRAM-backed memories using a simple **channel-height-width (CHW) linear layout**.
 
-Address generation is entirely deterministic and driven by counters.  
+Address generation is entirely deterministic and driven by counters.
+
 Every output location is written exactly once.
 
-This layout prioritises **observability and verifiability** over maximum efficiency.  
-Early bugs occurred when writes were issued one cycle too early or late, producing outputs that looked numerically plausible but were incorrect. The final design enforces:
+This layout prioritises **observability and verifiability** over maximum efficiency. Early bugs occurred when writes were issued one cycle too early or late, producing outputs that looked numerically plausible but were incorrect. The final design enforces:
 
 - write-once semantics
 - strict address sequencing
 - completion invariants verified in simulation
-
----
 
 # Fixed-Point Arithmetic
 
@@ -81,8 +75,6 @@ Inputs are quantised using lookup tables, while weights and biases are stored as
 The hardware behaviour is mirrored bit-for-bit in a reference model used during verification. Approximate agreement is insufficient — the RTL must exactly match the fixed-point semantics.
 
 The resulting design achieves **92.2% MNIST accuracy**, compared to **94.3%** for a simple floating-point PyTorch model trained for one epoch.
-
----
 
 # Stage Implementation Details
 
@@ -106,8 +98,6 @@ Max-pool reads four values per output element and performs signed comparisons. W
 
 The dense stage performs multiply-accumulate operations over the flattened feature map, followed by scaling and saturation. Argmax selects the highest output value with deterministic tie-breaking behaviour.
 
----
-
 # Verification
 
 Verification is **protocol-driven rather than output-driven**.
@@ -129,12 +119,11 @@ are treated as fatal errors even if the final numerical output appears correct.
 
 Full-system verification uses **Verilator** for cycle-accurate simulation.
 
----
-
 # Performance
 
 The compute pipeline requires roughly:
-'465,732 cycles @ 100 MHz ≈ 4.7 ms'
+
+`465,732 cycles @ 100 MHz ≈ 4.7 ms`
 
 Stage-level cycle counters show where time is spent:
 
@@ -150,8 +139,6 @@ This baseline stage breakdown motivated the later architecture study, since it i
 
 End-to-end latency including UART I/O is approximately **73 ms**, meaning communication dominates total runtime.
 
----
-
 # Architecture Experiments
 
 After validating the accelerator, a series of experiments were run to study architectural trade-offs.
@@ -164,14 +151,13 @@ Experiments are automated using a batch flow that collects:
 
 Results are stored in `results/fpga/aggregates`.
 
----
-
 # Dense Parallelism Scaling
 
 The main experiment varies the dense layer parallelism parameter:
-'DENSE_OUT_PAR = {1, 2, 5, 10}'
 
-![Stage cycle breakdown vs dense parallelism](figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png)
+`DENSE_OUT_PAR = {1, 2, 5, 10}`
+
+![Stage cycle breakdown vs dense parallelism](/content/figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png)
 
 *Stage cycle breakdown showing that convolution remains constant while dense latency decreases with parallelism.*
 
@@ -193,7 +179,7 @@ However, total accelerator latency improves only modestly:
 
 This corresponds to only **~1.14× end-to-end speedup**.
 
-![Latency vs dense parallelism](figures/latency_cycles_vs_DENSE_OUT_PAR.png)
+![Latency vs dense parallelism](/content/figures/latency_cycles_vs_DENSE_OUT_PAR.png)
 
 *Total latency decreases only modestly because the convolution stage dominates runtime.*
 
@@ -210,16 +196,15 @@ Area cost also grows significantly:
 
 The result demonstrates a common accelerator design lesson: **local block speedups do not necessarily translate into global system speedups**.
 
----
-
 # Precision vs Resource Study
 
 A second experiment varies arithmetic precision while keeping the architecture fixed.
 
 Formats tested:
-'Q12.5'
-'Q14.6'
-'Q16.7'
+
+`Q12.5`  
+`Q14.6`  
+`Q16.7`
 
 Latency remains constant across all formats because the controller schedule does not change. The primary effect is implementation cost:
 
@@ -230,27 +215,27 @@ Latency remains constant across all formats because the controller schedule does
 
 This confirms that precision changes primarily affect **area and timing**, not the accelerator's cycle schedule.
 
----
-
 # Analytical Latency Model
 
 A simple analytical model was implemented to predict latency.
 
 Because the architecture is sequential, total latency can be decomposed into:
-'total_latency = fixed_frontend + dense_stage'
+
+`total_latency = fixed_frontend + dense_stage`
+
 The fixed term includes:
-'conv + ReLU + pool + argmax + control overhead ≈ 403k cycles'
+
+`conv + ReLU + pool + argmax + control overhead ≈ 403k cycles`
 
 The dense term depends on parallelism:
-'dense_cycles = ceil(NUM_CLASSES / DENSE_OUT_PAR) × work_per_output'
+
+`dense_cycles = ceil(NUM_CLASSES / DENSE_OUT_PAR) × work_per_output`
 
 For the dense-parallelism sweep, this model matches measured latency exactly, demonstrating that the accelerator's behaviour is well explained by a simple stage-level decomposition.
 
-![Measured vs predicted latency](figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png)
+![Measured vs predicted latency](/content/figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png)
 
 *Measured latency matches the analytical latency model across the dense parallelism sweep.*
-
----
 
 # Key Takeaways
 
