@@ -1,40 +1,26 @@
 {{ define "main" }}
   <article class="single">
-    <header class="singleHero">
-      <div class="singleHeroTop">
-        <div class="singleMeta">
-          <span class="metaPill"><strong>Project</strong></span>
-          {{ with .Date }}<span class="metaPill">{{ .Format "January 2006" }}</span>{{ end }}
-          {{ with .Params.stack }}<span class="metaPill">{{ . }}</span>{{ end }}
-          {{ with .Params.repo }}<a class="metaPill" href="{{ . }}">Repository</a>{{ end }}
-        </div>
-        <h1 class="sectionTitle">{{ .Title }}</h1>
-        {{ with .Params.summary }}
-          <div class="summaryBlock">
-            <p>{{ . }}</p>
+    <h2 class="sectionTitle">{{ .Title }}</h2>
+    {{ with .Params.stack }}<p class="muted">{{ . }}</p>{{ end }}
+
+    {{ with .Params.kpis }}
+      <div class="kpis kpisWide">
+        {{ range . }}
+          <div class="kpi">
+            <div class="kpiLabel">{{ .label }}</div>
+            <div class="kpiValue">{{ .value }}</div>
+            {{ with .note }}<div class="kpiNote">{{ . }}</div>{{ end }}
           </div>
         {{ end }}
       </div>
-
-      {{ with .Params.kpis }}
-        <div class="kpis kpisWide">
-          {{ range . }}
-            <div class="kpi">
-              <div class="kpiLabel">{{ .label }}</div>
-              <div class="kpiValue">{{ .value }}</div>
-              {{ with .note }}<div class="kpiNote">{{ . }}</div>{{ end }}
-            </div>
-          {{ end }}
-        </div>
-      {{ end }}
-    </header>
+    {{ end }}
 
     <div class="content">
       {{ .Content }}
     </div>
 
     {{ with .Params.repo }}
-      <p class="repoLine">Source: <a href="{{ . }}">{{ . }}</a></p>
+      <p class="muted">Source: <a href="{{ . }}">{{ . }}</a></p>
     {{ end }}
   </article>
 {{ end }}

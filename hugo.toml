@@ -1,9 +1,3 @@
 baseURL = '/'
 languageCode = 'en-uk'
 title = 'Keelan Reilly'
-
-[markup.goldmark.parser]
-  wrapStandAloneImageWithinParagraph = false
-
-[markup.goldmark.parser.attribute]
-  block = true
