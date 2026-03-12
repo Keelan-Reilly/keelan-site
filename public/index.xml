@@ -2,25 +2,25 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Projects on Keelan Reilly</title>
-    <link>//localhost:1313/</link>
+    <link>/</link>
     <description>Recent content in Projects on Keelan Reilly</description>
     <generator>Hugo</generator>
     <language>en-uk</language>
     <lastBuildDate>Sat, 20 Dec 2025 00:00:00 +0000</lastBuildDate>
-    <atom:link href="//localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>FPGA Market Data Parser (Low-Latency Pipeline)</title>
-      <link>//localhost:1313/market_data_parser/</link>
+      <link>/market_data_parser/</link>
       <pubDate>Sat, 20 Dec 2025 00:00:00 +0000</pubDate>
-      <guid>//localhost:1313/market_data_parser/</guid>
+      <guid>/market_data_parser/</guid>
       <description>This project implements a low-latency market data ingestion pipeline in SystemVerilog. I built it to understand how protocol handling, backpressure, and control timing shape end-to-end latency in real hardware pipelines.</description>
     </item>
     <item>
       <title>Quantised CNN Inference Accelerator</title>
-      <link>//localhost:1313/cnn-accelerator/</link>
+      <link>/cnn-accelerator/</link>
       <pubDate>Sat, 20 Dec 2025 00:00:00 +0000</pubDate>
-      <guid>//localhost:1313/cnn-accelerator/</guid>
-      <description>This project implements a complete CNN inference pipeline in SystemVerilog. I built it to understand the tradeoffs of fixed-function hardware accelerators: the performance gains they deliver, and the flexibility they give up when data movement, arithmetic precision, and control timing are handled explicitly in hardware.</description>
+      <guid>/cnn-accelerator/</guid>
+      <description>A fixed-function FPGA CNN inference accelerator implemented in SystemVerilog. The project explores how architectural decisions around data layout, precision, and scheduling affect performance and flexibility.</description>
     </item>
   </channel>
 </rss>

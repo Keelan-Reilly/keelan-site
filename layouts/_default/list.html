@@ -1,16 +1,27 @@
 {{ define "main" }}
-  <h2 class="sectionTitle">{{ .Title }}</h2>
-  {{ if .Content }}<div class="lead">{{ .Content }}</div>{{ end }}
+  {{ $pages := .RegularPagesRecursive.ByDate.Reverse }}
+  <section class="sectionHeader">
+    <h1 class="sectionTitle">{{ .Title }}</h1>
+    {{ if .Content }}<div class="sectionLead">{{ .Content }}</div>{{ end }}
+    <div class="sectionMeta">
+      <span>{{ len $pages }} project{{ if ne (len $pages) 1 }}s{{ end }}</span>
+      <span>SystemVerilog, FPGA, verification, and accelerator write-ups</span>
+    </div>
+  </section>
 
   <div class="cards">
-    {{ range .Pages.ByDate.Reverse }}
+    {{ range $pages }}
       <article class="card">
         <div class="cardTop">
-          <h3 class="cardTitle"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-          {{ with .Params.stack }}<div class="muted">{{ . }}</div>{{ end }}
+          <div class="cardMeta">
+            {{ with .Date }}<span>{{ .Format "2006" }}</span>{{ end }}
+            {{ with .Params.stack }}<span>{{ . }}</span>{{ end }}
+            {{ with .Params.repo }}<a href="{{ . }}">Repo</a>{{ end }}
+          </div>
+          <h2 class="cardTitle"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
         </div>
 
-        {{ with .Params.summary }}<p class="muted">{{ . }}</p>{{ end }}
+        {{ with .Params.summary }}<p class="cardSummary">{{ . }}</p>{{ end }}
 
         {{ with .Params.kpis }}
           <div class="kpis">
