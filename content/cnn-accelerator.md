@@ -2,6 +2,7 @@
 title: "Quantised CNN Inference Accelerator"
 date: 2025-12-20
 summary: "A fixed-function FPGA CNN inference accelerator implemented in SystemVerilog. The project explores how architectural decisions around data layout, precision, and scheduling affect performance and flexibility."
+math: true
 repo: "https://github.com/Keelan-Reilly/CNN_FPGA"
 kpis:
   - label: "Compute latency (frame loaded → TX start)"
@@ -19,7 +20,7 @@ kpis:
 
 This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.
 
-The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU: explicit scheduling, explicit memory movement, fixed arithmetic, and deterministic latency.
+The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU.
 
 The accelerator receives an MNIST image over UART, processes it through a fully hardware pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.
 
@@ -32,7 +33,7 @@ The project explores two questions:
 
 The system receives a **28×28 grayscale image** over UART and processes it through a fixed pipeline:
 
-`convolution → ReLU → max-pool → dense → argmax → UART transmit`
+**convolution → ReLU → max-pool → dense → argmax → UART transmit**
 
 Once a frame is loaded, the accelerator runs autonomously until the classification result is produced.
 
@@ -123,7 +124,9 @@ Full-system verification uses **Verilator** for cycle-accurate simulation.
 
 The compute pipeline requires roughly:
 
-`465,732 cycles @ 100 MHz ≈ 4.7 ms`
+$$
+465{,}732 \text{ cycles at } 100\ \text{MHz} \approx 4.7\ \text{ms}
+$$
 
 Stage-level cycle counters show where time is spent:
 
@@ -155,7 +158,11 @@ Results are stored in `results/fpga/aggregates`.
 
 The main experiment varies the dense layer parallelism parameter:
 
-`DENSE_OUT_PAR = {1, 2, 5, 10}`
+$$
+P \in \{1,2,5,10\}
+$$
+
+where \(P\) denotes the dense-output parallelism parameter in the RTL.
 
 ![Stage cycle breakdown vs dense parallelism](/figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png)
 
@@ -200,11 +207,7 @@ The result demonstrates a common accelerator design lesson: **local block speedu
 
 A second experiment varies arithmetic precision while keeping the architecture fixed.
 
-Formats tested:
-
-`Q12.5`  
-`Q14.6`  
-`Q16.7`
+Formats tested were **Q12.5**, **Q14.6**, and **Q16.7**.
 
 Latency remains constant across all formats because the controller schedule does not change. The primary effect is implementation cost:
 
@@ -219,17 +222,27 @@ This confirms that precision changes primarily affect **area and timing**, not t
 
 A simple analytical model was implemented to predict latency.
 
-Because the architecture is sequential, total latency can be decomposed into:
+Because the architecture is sequential, total latency can be decomposed as
 
-`total_latency = fixed_frontend + dense_stage`
+$$
+L_{\text{total}} = L_{\text{fixed}} + L_{\text{dense}}.
+$$
 
-The fixed term includes:
+The fixed component is approximately
 
-`conv + ReLU + pool + argmax + control overhead ≈ 403k cycles`
+$$
+L_{\text{fixed}} \approx 403\,\text{k cycles},
+$$
 
-The dense term depends on parallelism:
+which includes convolution, ReLU, pooling, argmax, and control overhead.
 
-`dense_cycles = ceil(NUM_CLASSES / DENSE_OUT_PAR) × work_per_output`
+For the dense stage,
+
+$$
+L_{\text{dense}} = \lceil C/P \rceil\, W
+$$
+
+where \(C\) is the number of classes, \(P\) is the dense-output parallelism, and \(W\) is the work per output.
 
 For the dense-parallelism sweep, this model matches measured latency exactly, demonstrating that the accelerator's behaviour is well explained by a simple stage-level decomposition.
 
