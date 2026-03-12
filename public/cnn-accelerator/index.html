@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>
@@ -15,46 +15,32 @@
       <main>
         
   <article class="single">
-    <header class="singleHero">
-      <div class="singleHeroTop">
-        <div class="singleMeta">
-          <span class="metaPill"><strong>Project</strong></span>
-          <span class="metaPill">December 2025</span>
-          
-          <a class="metaPill" href="https://github.com/Keelan-Reilly/CNN_FPGA">Repository</a>
-        </div>
-        <h1 class="sectionTitle">Quantised CNN Inference Accelerator</h1>
+    <h2 class="sectionTitle">Quantised CNN Inference Accelerator</h2>
+    
+
+    
+      <div class="kpis kpisWide">
         
-          <div class="summaryBlock">
-            <p>A fixed-function FPGA CNN inference accelerator implemented in SystemVerilog. The project explores how architectural decisions around data layout, precision, and scheduling affect performance and flexibility.</p>
+          <div class="kpi">
+            <div class="kpiLabel">Compute latency (frame loaded → TX start)</div>
+            <div class="kpiValue">~466k cycles</div>
+            <div class="kpiNote">≈ 4.7 ms @ 100 MHz</div>
+          </div>
+        
+          <div class="kpi">
+            <div class="kpiLabel">End-to-end latency (UART RX &#43; compute &#43; UART TX)</div>
+            <div class="kpiValue">~7.28M cycles</div>
+            <div class="kpiNote">≈ 73 ms @ 115,200 baud</div>
+          </div>
+        
+          <div class="kpi">
+            <div class="kpiLabel">MNIST accuracy</div>
+            <div class="kpiValue">~92.2%</div>
+            <div class="kpiNote">Float baseline: ~94.3% (1 epoch)</div>
           </div>
         
       </div>
-
-      
-        <div class="kpis kpisWide">
-          
-            <div class="kpi">
-              <div class="kpiLabel">Compute latency (frame loaded → TX start)</div>
-              <div class="kpiValue">~466k cycles</div>
-              <div class="kpiNote">≈ 4.7 ms @ 100 MHz</div>
-            </div>
-          
-            <div class="kpi">
-              <div class="kpiLabel">End-to-end latency (UART RX &#43; compute &#43; UART TX)</div>
-              <div class="kpiValue">~7.28M cycles</div>
-              <div class="kpiNote">≈ 73 ms @ 115,200 baud</div>
-            </div>
-          
-            <div class="kpi">
-              <div class="kpiLabel">MNIST accuracy</div>
-              <div class="kpiValue">~92.2%</div>
-              <div class="kpiNote">Float baseline: ~94.3% (1 epoch)</div>
-            </div>
-          
-        </div>
-      
-    </header>
+    
 
     <div class="content">
       <h1 id="quantised-cnn-inference-accelerator">Quantised CNN Inference Accelerator</h1>
@@ -188,10 +174,8 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
 <h1 id="dense-parallelism-scaling">Dense Parallelism Scaling</h1>
 <p>The main experiment varies the dense layer parallelism parameter:
 &lsquo;DENSE_OUT_PAR = {1, 2, 5, 10}&rsquo;</p>
-<figure>
-  <img src="figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png" alt="Stage cycle breakdown vs dense parallelism" loading="lazy">
-    <figcaption>Stage cycle breakdown vs dense parallelism</figcaption>
-</figure><p><em>Stage cycle breakdown showing that convolution remains constant while dense latency decreases with parallelism.</em></p>
+<p><img src="figures/stage_cycles_breakdown_vs_DENSE_OUT_PAR.png" alt="Stage cycle breakdown vs dense parallelism"></p>
+<p><em>Stage cycle breakdown showing that convolution remains constant while dense latency decreases with parallelism.</em></p>
 <p>Dense stage latency scales almost ideally:</p>
 <table>
   <thead>
@@ -239,10 +223,8 @@ Early bugs occurred when writes were issued one cycle too early or late, produci
   </tbody>
 </table>
 <p>This corresponds to only <strong>~1.14× end-to-end speedup</strong>.</p>
-<figure>
-  <img src="figures/latency_cycles_vs_DENSE_OUT_PAR.png" alt="Latency vs dense parallelism" loading="lazy">
-    <figcaption>Latency vs dense parallelism</figcaption>
-</figure><p><em>Total latency decreases only modestly because the convolution stage dominates runtime.</em></p>
+<p><img src="figures/latency_cycles_vs_DENSE_OUT_PAR.png" alt="Latency vs dense parallelism"></p>
+<p><em>Total latency decreases only modestly because the convolution stage dominates runtime.</em></p>
 <p>The reason is visible in the stage breakdown: convolution remains constant at ~345k cycles and dominates the total runtime.</p>
 <p>Increasing dense parallelism therefore accelerates the dense block but quickly leaves the system <strong>convolution-bound</strong>.</p>
 <p>Area cost also grows significantly:</p>
@@ -311,10 +293,8 @@ The fixed term includes:
 <p>The dense term depends on parallelism:
 &lsquo;dense_cycles = ceil(NUM_CLASSES / DENSE_OUT_PAR) × work_per_output&rsquo;</p>
 <p>For the dense-parallelism sweep, this model matches measured latency exactly, demonstrating that the accelerator&rsquo;s behaviour is well explained by a simple stage-level decomposition.</p>
-<figure>
-  <img src="figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png" alt="Measured vs predicted latency" loading="lazy">
-    <figcaption>Measured vs predicted latency</figcaption>
-</figure><p><em>Measured latency matches the analytical latency model across the dense parallelism sweep.</em></p>
+<p><img src="figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png" alt="Measured vs predicted latency"></p>
+<p><em>Measured latency matches the analytical latency model across the dense parallelism sweep.</em></p>
 <hr>
 <h1 id="key-takeaways">Key Takeaways</h1>
 <p>This project illustrates the trade-offs inherent in fixed-function hardware acceleration.</p>
@@ -332,7 +312,7 @@ The fixed term includes:
     </div>
 
     
-      <p class="repoLine">Source: <a href="https://github.com/Keelan-Reilly/CNN_FPGA">https://github.com/Keelan-Reilly/CNN_FPGA</a></p>
+      <p class="muted">Source: <a href="https://github.com/Keelan-Reilly/CNN_FPGA">https://github.com/Keelan-Reilly/CNN_FPGA</a></p>
     
   </article>
 

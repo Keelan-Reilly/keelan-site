@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>
@@ -15,46 +15,32 @@
       <main>
         
   <article class="single">
-    <header class="singleHero">
-      <div class="singleHeroTop">
-        <div class="singleMeta">
-          <span class="metaPill"><strong>Project</strong></span>
-          <span class="metaPill">December 2025</span>
-          
-          <a class="metaPill" href="https://github.com/Keelan-Reilly/low_latency_market_parser">Repository</a>
-        </div>
-        <h1 class="sectionTitle">FPGA Market Data Parser (Low-Latency Pipeline)</h1>
+    <h2 class="sectionTitle">FPGA Market Data Parser (Low-Latency Pipeline)</h2>
+    
+
+    
+      <div class="kpis kpisWide">
         
-          <div class="summaryBlock">
-            <p>This project implements a low-latency market data ingestion pipeline in SystemVerilog. I built it to understand how protocol handling, backpressure, and control timing shape end-to-end latency in real hardware pipelines.</p>
+          <div class="kpi">
+            <div class="kpiLabel">End-to-end latency (ingress → decision)</div>
+            <div class="kpiValue">~38 cycles</div>
+            <div class="kpiNote">≈ 152 ns @ 250 MHz (simulation)</div>
+          </div>
+        
+          <div class="kpi">
+            <div class="kpiLabel">Clock target</div>
+            <div class="kpiValue">250 MHz</div>
+            <div class="kpiNote">Closed with positive slack in Vivado</div>
+          </div>
+        
+          <div class="kpi">
+            <div class="kpiLabel">Verification</div>
+            <div class="kpiValue">Cycle-accurate</div>
+            <div class="kpiNote">Verilator &#43; Python reference models</div>
           </div>
         
       </div>
-
-      
-        <div class="kpis kpisWide">
-          
-            <div class="kpi">
-              <div class="kpiLabel">End-to-end latency (ingress → decision)</div>
-              <div class="kpiValue">~38 cycles</div>
-              <div class="kpiNote">≈ 152 ns @ 250 MHz (simulation)</div>
-            </div>
-          
-            <div class="kpi">
-              <div class="kpiLabel">Clock target</div>
-              <div class="kpiValue">250 MHz</div>
-              <div class="kpiNote">Closed with positive slack in Vivado</div>
-            </div>
-          
-            <div class="kpi">
-              <div class="kpiLabel">Verification</div>
-              <div class="kpiValue">Cycle-accurate</div>
-              <div class="kpiNote">Verilator &#43; Python reference models</div>
-            </div>
-          
-        </div>
-      
-    </header>
+    
 
     <div class="content">
       <h2 id="introduction">Introduction</h2>
@@ -87,7 +73,7 @@
     </div>
 
     
-      <p class="repoLine">Source: <a href="https://github.com/Keelan-Reilly/low_latency_market_parser">https://github.com/Keelan-Reilly/low_latency_market_parser</a></p>
+      <p class="muted">Source: <a href="https://github.com/Keelan-Reilly/low_latency_market_parser">https://github.com/Keelan-Reilly/low_latency_market_parser</a></p>
     
   </article>
 
