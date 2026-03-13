@@ -64,19 +64,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     <div class="content">
       <p>This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.</p>
-<p>The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU.</p>
-<p>The accelerator receives an MNIST image over UART, processes it through a fully hardware pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.</p>
+<p>The goal was to explore how neural network inference changes when implemented as fixed-function hardware rather than software running on a CPU.</p>
+<p>The accelerator receives an MNIST image over UART, processes it through a fully hardware-implemented pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.</p>
 <p>The project explores two questions:</p>
 <ul>
 <li>What engineering challenges appear when implementing an inference pipeline directly in RTL?</li>
 <li>How do architectural choices affect performance, area, and timing once the design is synthesised?</li>
 </ul>
-<h1 id="system-overview">System Overview</h1>
+<h2 id="system-overview">System Overview</h2>
 <p>The system receives a <strong>28×28 grayscale image</strong> over UART and processes it through a fixed pipeline:</p>
 <p><strong>convolution → ReLU → max-pool → dense → argmax → UART transmit</strong></p>
 <p>Once a frame is loaded, the accelerator runs autonomously until the classification result is produced.</p>
-<p>There is no control processor or software runtime. Instead, each stage is implemented as a hardware module with explicit control signals and deterministic memory access patterns.</p>
-<h1 id="pipeline-control">Pipeline Control</h1>
+<p>There is no control processor or software runtime. Instead, each stage is implemented as a hardware module with explicit control signals and deterministic memory access.</p>
+<h2 id="pipeline-control">Pipeline Control</h2>
 <p>The pipeline is organised as a sequence of stages controlled by a top-level FSM.</p>
 <p>Each stage exposes a simple protocol:</p>
 <ul>
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </ul>
 <p>While active, a stage has exclusive ownership of its input and output memories. This design avoids ambiguity when memory latency exceeds a single cycle and makes stage boundaries explicit during verification.</p>
 <p>The resulting architecture is <strong>sequential rather than pipelined</strong>: stages execute one after another rather than overlapping.</p>
-<h1 id="memory-organisation">Memory Organisation</h1>
+<h2 id="memory-organisation">Memory Organisation</h2>
 <p>Feature maps are stored in BRAM-backed memories using a simple <strong>channel-height-width (CHW) linear layout</strong>.</p>
 <p>Address generation is entirely deterministic and driven by counters.</p>
 <p>Every output location is written exactly once.</p>
@@ -96,29 +96,29 @@ document.addEventListener("DOMContentLoaded", function () {
 <li>strict address sequencing</li>
 <li>completion invariants verified in simulation</li>
 </ul>
-<h1 id="fixed-point-arithmetic">Fixed-Point Arithmetic</h1>
+<h2 id="fixed-point-arithmetic">Fixed-Point Arithmetic</h2>
 <p>All arithmetic uses signed fixed-point representation.</p>
 <p>Inputs are quantised using lookup tables, while weights and biases are stored as signed constants. Multiply-accumulate operations use widened accumulators to absorb dynamic range growth before scaling and saturation back to the output width.</p>
 <p>The hardware behaviour is mirrored bit-for-bit in a reference model used during verification. Approximate agreement is insufficient — the RTL must exactly match the fixed-point semantics.</p>
 <p>The resulting design achieves <strong>92.2% MNIST accuracy</strong>, compared to <strong>94.3%</strong> for a simple floating-point PyTorch model trained for one epoch.</p>
-<h1 id="stage-implementation-details">Stage Implementation Details</h1>
+<h2 id="stage-implementation">Stage Implementation</h2>
 <h3 id="convolution">Convolution</h3>
 <p>The convolution stage implements SAME padding and iterates explicitly over channels and kernel taps. Data is fetched from BRAM through an interface with configurable latency.</p>
-<p>A subtle control bug only appeared once memory latency exceeded a single cycle: advancing the address counter and accumulation logic together caused values from different kernel positions to mix. This error was invisible under single-cycle memory but surfaced immediately once latency was parameterised in the testbench.</p>
+<p>A subtle control bug only appeared once memory latency exceeded a single cycle: advancing the address counter and accumulator in the same cycle caused values from different kernel positions to mix. This error was invisible under single-cycle memory but surfaced immediately once latency was parameterised in the testbench.</p>
 <h3 id="relu">ReLU</h3>
-<p>ReLU is implemented as an in-place read-modify-write operation using dual-port memory. Each read must correspond to a write a fixed number of cycles later.</p>
+<p>ReLU is implemented as an in-place read-modify-write operation using dual-port memory. Each read must be followed by a corresponding write after a fixed pipeline delay.</p>
 <p>Early versions failed silently when reads and writes overlapped incorrectly. The final testbench tracks read addresses through the pipeline delay and asserts alignment cycle-by-cycle.</p>
 <h3 id="max-pooling">Max-Pooling</h3>
 <p>Max-pool reads four values per output element and performs signed comparisons. While functionally simple, addressing errors are easy to introduce. The testbench therefore asserts the exact read sequence for every pooling window.</p>
 <h3 id="dense-and-argmax">Dense and Argmax</h3>
 <p>The dense stage performs multiply-accumulate operations over the flattened feature map, followed by scaling and saturation. Argmax selects the highest output value with deterministic tie-breaking behaviour.</p>
-<h1 id="verification">Verification</h1>
+<h2 id="verification">Verification</h2>
 <p>Verification is <strong>protocol-driven rather than output-driven</strong>.</p>
 <p>Each module has its own testbench consisting of:</p>
 <ul>
 <li>a BRAM-like memory model with configurable latency</li>
 <li>a bit-exact golden reference model</li>
-<li>assertions enforcing interface contracts</li>
+<li>assertions enforcing interface protocol contracts</li>
 </ul>
 <p>Failures such as:</p>
 <ul>
@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </ul>
 <p>are treated as fatal errors even if the final numerical output appears correct.</p>
 <p>Full-system verification uses <strong>Verilator</strong> for cycle-accurate simulation.</p>
-<h1 id="performance">Performance</h1>
+<h2 id="performance">Performance</h2>
 <p>The compute pipeline requires roughly:</p>
 $$
 465{,}732 \text{ cycles at } 100\ \text{MHz} \approx 4.7\ \text{ms}
@@ -171,8 +171,8 @@ $$<p>Stage-level cycle counters show where time is spent:</p>
   </tbody>
 </table>
 <p>This baseline stage breakdown motivated the later architecture study, since it immediately suggested that convolution rather than dense was the dominant bottleneck.</p>
-<p>End-to-end latency including UART I/O is approximately <strong>73 ms</strong>, meaning communication dominates total runtime.</p>
-<h1 id="architecture-experiments">Architecture Experiments</h1>
+<p>End-to-end latency including UART I/O is approximately <strong>73 ms</strong>, meaning communication dominates total runtime in this prototype configuration.</p>
+<h2 id="architecture-experiments">Architecture Experiments</h2>
 <p>After validating the accelerator, a series of experiments were run to study architectural trade-offs.</p>
 <p>Experiments are automated using a batch flow that collects:</p>
 <ul>
@@ -181,7 +181,7 @@ $$<p>Stage-level cycle counters show where time is spent:</p>
 <li>per-stage cycle counters</li>
 </ul>
 <p>Results are stored in <code>results/fpga/aggregates</code>.</p>
-<h1 id="dense-parallelism-scaling">Dense Parallelism Scaling</h1>
+<h2 id="dense-parallelism-scaling">Dense Parallelism Scaling</h2>
 <p>The main experiment varies the dense layer parallelism parameter:</p>
 $$
 P \in \{1,2,5,10\}
@@ -262,7 +262,7 @@ $$<p>where \(P\) denotes the dense-output parallelism parameter in the RTL.</p>
   </tbody>
 </table>
 <p>The result demonstrates a common accelerator design lesson: <strong>local block speedups do not necessarily translate into global system speedups</strong>.</p>
-<h1 id="precision-vs-resource-study">Precision vs Resource Study</h1>
+<h2 id="precision-vs-resource-study">Precision vs Resource Study</h2>
 <p>A second experiment varies arithmetic precision while keeping the architecture fixed.</p>
 <p>Formats tested were <strong>Q12.5</strong>, <strong>Q14.6</strong>, and <strong>Q16.7</strong>.</p>
 <p>Latency remains constant across all formats because the controller schedule does not change. The primary effect is implementation cost:</p>
@@ -291,7 +291,7 @@ $$<p>where \(P\) denotes the dense-output parallelism parameter in the RTL.</p>
   </tbody>
 </table>
 <p>This confirms that precision changes primarily affect <strong>area and timing</strong>, not the accelerator&rsquo;s cycle schedule.</p>
-<h1 id="analytical-latency-model">Analytical Latency Model</h1>
+<h2 id="analytical-latency-model">Analytical Latency Model</h2>
 <p>A simple analytical model was implemented to predict latency.</p>
 <p>Because the architecture is sequential, total latency can be decomposed as</p>
 $$
@@ -303,11 +303,11 @@ $$<p>which includes convolution, ReLU, pooling, argmax, and control overhead.</p
 <p>For the dense stage,</p>
 $$
 L_{\text{dense}} = \lceil C/P \rceil\, W
-$$<p>where \(C\) is the number of classes, \(P\) is the dense-output parallelism, and \(W\) is the work per output.</p>
+$$<p>where \(C\) is the number of output classes, \(P\) is the dense-output parallelism, and \(W\) is the work per output group.</p>
 <p>For the dense-parallelism sweep, this model matches measured latency exactly, demonstrating that the accelerator&rsquo;s behaviour is well explained by a simple stage-level decomposition.</p>
 <p><img src="/figures/measured_vs_predicted_latency_vs_DENSE_OUT_PAR.png" alt="Measured vs predicted latency"></p>
 <p><em>Measured latency matches the analytical latency model across the dense parallelism sweep.</em></p>
-<h1 id="key-takeaways">Key Takeaways</h1>
+<h2 id="key-takeaways">Key Takeaways</h2>
 <p>This project illustrates the trade-offs inherent in fixed-function hardware acceleration.</p>
 <p>Hard-wiring decisions about:</p>
 <ul>

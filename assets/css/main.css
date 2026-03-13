@@ -118,10 +118,15 @@ a:hover{ opacity:0.85; }
 .kpiValue{ font-weight:700; font-size:1.08rem; letter-spacing:-0.01em; }
 .kpiNote{ color:var(--muted); font-size:0.92rem; margin-top:3px; }
 
-.single .content{
-  max-width: 78ch;
-  margin: 0 auto;
+.single .sectionTitle,
+.single .kpisWide,
+.single .content,
+.single > .muted{
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
+
 .single .content > :first-child{ margin-top: 0; }
 .single .content p,
 .single .content ul,
@@ -245,4 +250,8 @@ code{
 
 .single .content .katex{
   max-width: 100%;
+}
+
+.single h1:first-of-type{
+  margin-bottom: 1.25rem;
 }

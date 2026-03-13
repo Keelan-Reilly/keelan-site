@@ -18,16 +18,16 @@ kpis:
 
 This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.
 
-The goal was to study what changes when neural network inference is implemented as fixed-function hardware rather than software on a CPU.
+The goal was to explore how neural network inference changes when implemented as fixed-function hardware rather than software running on a CPU.
 
-The accelerator receives an MNIST image over UART, processes it through a fully hardware pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.
+The accelerator receives an MNIST image over UART, processes it through a fully hardware-implemented pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.
 
 The project explores two questions:
 
 - What engineering challenges appear when implementing an inference pipeline directly in RTL?
 - How do architectural choices affect performance, area, and timing once the design is synthesised?
 
-# System Overview
+## System Overview
 
 The system receives a **28×28 grayscale image** over UART and processes it through a fixed pipeline:
 
@@ -35,9 +35,9 @@ The system receives a **28×28 grayscale image** over UART and processes it thro
 
 Once a frame is loaded, the accelerator runs autonomously until the classification result is produced.
 
-There is no control processor or software runtime. Instead, each stage is implemented as a hardware module with explicit control signals and deterministic memory access patterns.
+There is no control processor or software runtime. Instead, each stage is implemented as a hardware module with explicit control signals and deterministic memory access.
 
-# Pipeline Control
+## Pipeline Control
 
 The pipeline is organised as a sequence of stages controlled by a top-level FSM.
 
@@ -51,7 +51,7 @@ While active, a stage has exclusive ownership of its input and output memories. 
 
 The resulting architecture is **sequential rather than pipelined**: stages execute one after another rather than overlapping.
 
-# Memory Organisation
+## Memory Organisation
 
 Feature maps are stored in BRAM-backed memories using a simple **channel-height-width (CHW) linear layout**.
 
@@ -65,7 +65,7 @@ This layout prioritises **observability and verifiability** over maximum efficie
 - strict address sequencing
 - completion invariants verified in simulation
 
-# Fixed-Point Arithmetic
+## Fixed-Point Arithmetic
 
 All arithmetic uses signed fixed-point representation.
 
@@ -75,17 +75,17 @@ The hardware behaviour is mirrored bit-for-bit in a reference model used during 
 
 The resulting design achieves **92.2% MNIST accuracy**, compared to **94.3%** for a simple floating-point PyTorch model trained for one epoch.
 
-# Stage Implementation Details
+## Stage Implementation
 
 ### Convolution
 
 The convolution stage implements SAME padding and iterates explicitly over channels and kernel taps. Data is fetched from BRAM through an interface with configurable latency.
 
-A subtle control bug only appeared once memory latency exceeded a single cycle: advancing the address counter and accumulation logic together caused values from different kernel positions to mix. This error was invisible under single-cycle memory but surfaced immediately once latency was parameterised in the testbench.
+A subtle control bug only appeared once memory latency exceeded a single cycle: advancing the address counter and accumulator in the same cycle caused values from different kernel positions to mix. This error was invisible under single-cycle memory but surfaced immediately once latency was parameterised in the testbench.
 
 ### ReLU
 
-ReLU is implemented as an in-place read-modify-write operation using dual-port memory. Each read must correspond to a write a fixed number of cycles later.
+ReLU is implemented as an in-place read-modify-write operation using dual-port memory. Each read must be followed by a corresponding write after a fixed pipeline delay.
 
 Early versions failed silently when reads and writes overlapped incorrectly. The final testbench tracks read addresses through the pipeline delay and asserts alignment cycle-by-cycle.
 
@@ -97,7 +97,7 @@ Max-pool reads four values per output element and performs signed comparisons. W
 
 The dense stage performs multiply-accumulate operations over the flattened feature map, followed by scaling and saturation. Argmax selects the highest output value with deterministic tie-breaking behaviour.
 
-# Verification
+## Verification
 
 Verification is **protocol-driven rather than output-driven**.
 
@@ -105,7 +105,7 @@ Each module has its own testbench consisting of:
 
 - a BRAM-like memory model with configurable latency
 - a bit-exact golden reference model
-- assertions enforcing interface contracts
+- assertions enforcing interface protocol contracts
 
 Failures such as:
 
@@ -118,7 +118,7 @@ are treated as fatal errors even if the final numerical output appears correct.
 
 Full-system verification uses **Verilator** for cycle-accurate simulation.
 
-# Performance
+## Performance
 
 The compute pipeline requires roughly:
 
@@ -138,9 +138,9 @@ Stage-level cycle counters show where time is spent:
 
 This baseline stage breakdown motivated the later architecture study, since it immediately suggested that convolution rather than dense was the dominant bottleneck.
 
-End-to-end latency including UART I/O is approximately **73 ms**, meaning communication dominates total runtime.
+End-to-end latency including UART I/O is approximately **73 ms**, meaning communication dominates total runtime in this prototype configuration.
 
-# Architecture Experiments
+## Architecture Experiments
 
 After validating the accelerator, a series of experiments were run to study architectural trade-offs.
 
@@ -152,7 +152,7 @@ Experiments are automated using a batch flow that collects:
 
 Results are stored in `results/fpga/aggregates`.
 
-# Dense Parallelism Scaling
+## Dense Parallelism Scaling
 
 The main experiment varies the dense layer parallelism parameter:
 
@@ -201,7 +201,7 @@ Area cost also grows significantly:
 
 The result demonstrates a common accelerator design lesson: **local block speedups do not necessarily translate into global system speedups**.
 
-# Precision vs Resource Study
+## Precision vs Resource Study
 
 A second experiment varies arithmetic precision while keeping the architecture fixed.
 
@@ -216,7 +216,7 @@ Latency remains constant across all formats because the controller schedule does
 
 This confirms that precision changes primarily affect **area and timing**, not the accelerator's cycle schedule.
 
-# Analytical Latency Model
+## Analytical Latency Model
 
 A simple analytical model was implemented to predict latency.
 
@@ -240,7 +240,7 @@ $$
 L_{\text{dense}} = \lceil C/P \rceil\, W
 $$
 
-where \(C\) is the number of classes, \(P\) is the dense-output parallelism, and \(W\) is the work per output.
+where \(C\) is the number of output classes, \(P\) is the dense-output parallelism, and \(W\) is the work per output group.
 
 For the dense-parallelism sweep, this model matches measured latency exactly, demonstrating that the accelerator's behaviour is well explained by a simple stage-level decomposition.
 
@@ -248,7 +248,7 @@ For the dense-parallelism sweep, this model matches measured latency exactly, de
 
 *Measured latency matches the analytical latency model across the dense parallelism sweep.*
 
-# Key Takeaways
+## Key Takeaways
 
 This project illustrates the trade-offs inherent in fixed-function hardware acceleration.
 
