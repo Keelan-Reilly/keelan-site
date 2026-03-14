@@ -16,11 +16,11 @@ kpis:
     note: "Float baseline: ~94.3% (1 epoch)"
 ---
 
-This project implements a complete convolutional neural network inference pipeline in SystemVerilog on an FPGA.
+This project implements a complete fixed-point convolutional neural network inference accelerator in SystemVerilog on an FPGA.
 
-The goal was to explore how neural network inference changes when implemented as fixed-function hardware rather than software running on a CPU.
+Rather than treating inference as software running on a processor, the project hard-wires the entire execution path in RTL: input reception, feature-map storage, stage scheduling, arithmetic, and output transmission are all implemented directly in hardware.
 
-The accelerator receives an MNIST image over UART, processes it through a fully hardware-implemented pipeline, and transmits the predicted digit. No CPU, runtime, or instruction execution is involved. All scheduling, memory access, and arithmetic behaviour are defined directly in hardware.
+In addition to the accelerator itself, I built a full verification and experimentation stack around the design: bit-exact fixed-point reference modelling, module-level testbenches, end-to-end Verilator simulation, batch Vivado automation, report parsing, and parameter-sweep analysis.
 
 The project explores two questions:
 
@@ -35,7 +35,7 @@ The system receives a **28×28 grayscale image** over UART and processes it thro
 
 Once a frame is loaded, the accelerator runs autonomously until the classification result is produced.
 
-There is no control processor or software runtime. Instead, each stage is implemented as a hardware module with explicit control signals and deterministic memory access.
+There is no control processor, instruction stream, or software runtime in the inference path. Each stage is implemented as a dedicated hardware module with explicit control signals, deterministic memory access, and fixed-cycle behaviour.
 
 ## Pipeline Control
 
@@ -59,7 +59,7 @@ Address generation is entirely deterministic and driven by counters.
 
 Every output location is written exactly once.
 
-This layout prioritises **observability and verifiability** over maximum efficiency. Early bugs occurred when writes were issued one cycle too early or late, producing outputs that looked numerically plausible but were incorrect. The final design enforces:
+This layout deliberately prioritises **observability, determinism, and verifiability** over maximum throughput efficiency. Early bugs occurred when writes were issued one cycle too early or late, producing outputs that looked numerically plausible but were incorrect. The final design enforces:
 
 - write-once semantics
 - strict address sequencing
@@ -71,7 +71,7 @@ All arithmetic uses signed fixed-point representation.
 
 Inputs are quantised using lookup tables, while weights and biases are stored as signed constants. Multiply-accumulate operations use widened accumulators to absorb dynamic range growth before scaling and saturation back to the output width.
 
-The hardware behaviour is mirrored bit-for-bit in a reference model used during verification. Approximate agreement is insufficient — the RTL must exactly match the fixed-point semantics.
+The RTL behaviour is mirrored bit-for-bit in a hardware-matching software reference model used during verification. Approximate agreement is insufficient — the RTL must exactly match the fixed-point semantics.
 
 The resulting design achieves **92.2% MNIST accuracy**, compared to **94.3%** for a simple floating-point PyTorch model trained for one epoch.
 
@@ -99,13 +99,13 @@ The dense stage performs multiply-accumulate operations over the flattened featu
 
 ## Verification
 
-Verification is **protocol-driven rather than output-driven**.
+Verification is **protocol-driven rather than only output-driven**.
 
-Each module has its own testbench consisting of:
+Each module has its own dedicated testbench consisting of:
 
 - a BRAM-like memory model with configurable latency
-- a bit-exact golden reference model
-- assertions enforcing interface protocol contracts
+- a bit-exact fixed-point golden reference
+- assertions enforcing interface and timing contracts
 
 Failures such as:
 
@@ -113,10 +113,28 @@ Failures such as:
 - duplicate writes
 - out-of-range accesses
 - multi-cycle `done` pulses
+- misaligned read/write timing relative to BRAM latency
 
 are treated as fatal errors even if the final numerical output appears correct.
 
-Full-system verification uses **Verilator** for cycle-accurate simulation.
+At the system level, the full accelerator is verified using **Verilator** with a UART-driven C++ testbench. The design is stimulated through the same serial interface used by the deployed hardware path rather than by directly poking internal memories, which makes the end-to-end validation substantially more realistic.
+
+## Tooling and Experiment Infrastructure
+
+The repository contains more than the RTL accelerator itself. I also built an automated experimentation flow around the design so that architectural changes could be evaluated reproducibly rather than through one-off synthesis runs.
+
+This flow includes:
+
+- PyTorch training and fixed-point weight export into `.mem` files used directly by the RTL
+- module-level SystemVerilog testbenches for stage validation
+- end-to-end Verilator simulation through the real UART interface
+- batch Vivado execution for FPGA implementation runs
+- automatic parsing of post-route timing and utilisation reports
+- parameter-sweep orchestration over design variables such as data width, fractional precision, clock target, UART rate, and dense-layer parallelism
+- aggregate result generation in CSV/JSON form for later analysis and plotting
+
+This turned the project from a single FPGA implementation into a small **architecture exploration framework** for studying how microarchitectural decisions affect latency, timing closure, and resource usage.
+
 
 ## Performance
 
@@ -142,9 +160,9 @@ End-to-end latency including UART I/O is approximately **73 ms**, meaning commun
 
 ## Architecture Experiments
 
-After validating the accelerator, a series of experiments were run to study architectural trade-offs.
+After validating the accelerator, I used the repository’s batch experiment flow to run reproducible architecture studies across multiple RTL parameter points.
 
-Experiments are automated using a batch flow that collects:
+The automation flow collects:
 
 - post-route area and timing from Vivado
 - cycle-accurate performance from Verilator
@@ -199,7 +217,7 @@ Area cost also grows significantly:
 | 1 | 2,720 | 5 |
 | 10 | 19,061 | 23 |
 
-The result demonstrates a common accelerator design lesson: **local block speedups do not necessarily translate into global system speedups**.
+This demonstrates a core accelerator-design lesson: **local block speedups do not automatically produce meaningful end-to-end speedups once the system becomes bottlenecked elsewhere**.
 
 ## Precision vs Resource Study
 
@@ -263,4 +281,4 @@ removes software overhead and yields deterministic performance. However, it also
 
 In this accelerator, the convolution stage dominates total runtime. Improving dense parallelism therefore provides only limited end-to-end gains. The next architectural step would be exploring **convolution parallelism or dataflow changes** rather than further scaling the dense layer.
 
-The design therefore serves as both a working accelerator and a concrete baseline for understanding how microarchitectural choices translate into real hardware performance.
+The result is both a working FPGA inference accelerator and a reproducible hardware-study platform. It demonstrates not only the RTL implementation of a fixed-function CNN, but also the verification, automation, and measurement infrastructure needed to study how microarchitectural choices translate into real hardware performance.
