@@ -33,7 +33,6 @@ To make this possible, the entire workflow was automated. A Python-based control
 
 This matters because many architectural ideas look equivalent at a high level, but diverge significantly under physical constraints. In FPGA-based systems in particular, where resources are fixed and routing is expensive, understanding these tradeoffs is critical.
 
----
 
 ## A Small but Revealing Design Space
 
@@ -51,8 +50,6 @@ Rather than exploring a large search space, the study focuses on a bounded grid:
 
 This produces nine canonical configurations. The constraint is intentional: keeping the space small makes it possible to measure each point carefully and interpret the results clearly.
 
----
-
 ## What Happens When You Scale
 
 The baseline architecture behaves as expected:
@@ -66,8 +63,6 @@ The baseline architecture behaves as expected:
 Increasing array size increases both performance and cost. Latency grows with the computation, and area grows with the number of compute units. Timing slack decreases as routing becomes more complex.
 
 This provides a clean reference point: straightforward parallelism scales predictably, but not cheaply.
-
----
 
 ## Two Different Ways to Trade Resources
 
@@ -89,8 +84,6 @@ In other words:
 
 These are fundamentally different ways of using resources, and they scale very differently.
 
----
-
 ## Sharing: Doing More with Less Hardware
 
 | Candidate | Latency | LUT | DSP | WNS |
@@ -98,6 +91,7 @@ These are fundamentally different ways of using resources, and they scale very d
 | shared 4×4 | 26 cycles | 695 | 8 | 2.024 ns |
 | shared 8×4 | 42 cycles | 1415 | 16 | 1.477 ns |
 | shared 8×8 | 74 cycles | 2749 | 32 | 1.571 ns |
+
 
 ![Canonical DSP vs latency](/figures/canonical_dsp_vs_latency.png)
 
@@ -116,8 +110,6 @@ At `8×8`, this becomes especially clear:
 - DSP drops from 64 → 32  
 
 This suggests that sharing does not fundamentally change the computation—it simply redistributes it over time. As a result, it achieves significant resource savings without disrupting the overall behaviour of the design.
-
----
 
 ## Replication: Fast, Until It Isn't
 
@@ -139,8 +131,6 @@ At `8×8`, the design no longer implements:
 - placement and routing fail on the target FPGA  
 
 This is not a missing result—it is the most important one.
-
----
 
 ## A Hard Limit Appears
 
@@ -164,8 +154,6 @@ This reveals something important:
 
 The replicated design does not degrade gracefully. It simply stops working.
 
----
-
 ## What This Tells Us
 
 Taken together, the results show three distinct behaviours:
@@ -182,15 +170,11 @@ In particular:
 - replication exposes a sharp boundary where physical constraints dominate  
 - implementation failure is a meaningful and informative result  
 
----
-
 ## Limitations
 
 This study is intentionally narrow. It focuses on a small set of array sizes, a single FPGA target, and does not consider power or energy.
 
 However, this constraint is also a strength: it allows the behaviour of each architectural strategy to be observed clearly, without confounding variables.
-
----
 
 ## Closing Remarks
 
