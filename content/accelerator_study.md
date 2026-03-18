@@ -1,7 +1,7 @@
 ---
 title: "Measured Tradeoffs in FPGA MAC-Array Architectures"
 date: 2026-03-17
-summary: "A deterministic experimentation framework for bounded FPGA architecture studies over parameterised SystemVerilog MAC-array accelerators, with canonical run provenance, automated verification/synthesis/performance collection, and measured tradeoff analysis across baseline, shared, and replicated compute structures."
+summary: "An empirical exploration of how compute sharing and replication shape the real-world behaviour of FPGA MAC-array accelerators, grounded in automated, reproducible hardware experiments."
 math: true
 kpis:
   - label: "8×8 DSP reduction"
@@ -17,160 +17,45 @@ kpis:
     note: "baseline / shared / replicated across 4×4, 8×4, 8×8"
 ---
 
-This project is a deterministic control plane for bounded FPGA architecture studies over a parameterised SystemVerilog MAC-array accelerator.
+## Introduction
 
-The repository owns the full experimental workflow around the hardware implementation: candidate manifests, canonical run directories, fast verification, Vivado implementation, Verilator performance collection, SQLite-backed provenance, score computation, and result generation. The RTL implementation itself lives in an external accelerator repository; this project owns the measurement and evidence model around it.
+Most discussions of accelerator design reduce to a simple idea: more parallelism leads to more performance. Wider arrays, more compute units, higher throughput. In practice, this view is incomplete. Once designs are mapped onto real hardware—especially FPGAs—physical constraints such as routing congestion, area limits, and timing closure begin to dominate.
 
-The study focuses on a simple question:
+This project explores that gap between architectural intuition and physical reality.
 
-- how baseline, shared, and replicated MAC-array structures trade off **latency, area, and timing**
-- where sharing remains efficient
-- where replication becomes physically too expensive on the target FPGA
+The focus is a simple but important question:
 
-## Project Overview
+> how do different structural approaches to compute—baseline, shared, and replicated—actually behave when implemented on real hardware?
 
-The active accelerator family is a bounded MAC-array / GEMM-style architecture with real synthesizable parameters for:
+Rather than proposing a new architecture, the work takes an empirical approach. A small, controlled design space is explored and every point is measured using a consistent toolflow. The goal is not to optimise a single design, but to understand how different architectural choices scale—and where they stop working.
 
-- architecture family
-- array dimensions
-- cluster size
-- sharing factor
-- arithmetic width
-- accumulator width
-- bounded pipeline depth
-- memory sizing
+To make this possible, the entire workflow was automated. A Python-based controller drives candidate generation, verification, synthesis, implementation, and simulation, producing a deterministic set of results for each configuration. This ensures that every data point is directly comparable, and that failed implementations are preserved as part of the evidence rather than discarded.
 
-Each candidate is evaluated through a fixed controller-owned flow:
+This matters because many architectural ideas look equivalent at a high level, but diverge significantly under physical constraints. In FPGA-based systems in particular, where resources are fixed and routing is expensive, understanding these tradeoffs is critical.
 
-**manifest registration → fast verification → Vivado implementation → Verilator performance collection → scoring/ranking**
+---
 
-Every controller run produces:
+## A Small but Revealing Design Space
 
-- a canonical `runs/<candidate_id>/attempt_<n>/` directory
-- stable stage outputs
-- tracked state transitions in SQLite
-- explicit provenance about whether ranking uses full implementation data or provisional synth-only evidence
+The study is built around a parameterised MAC-array accelerator, representative of GEMM-style compute structures used in machine learning and signal processing.
 
-This keeps the study reproducible and prevents results from drifting across scratch directories, stale reports, or overwritten runs.
+Three architectural strategies are considered:
 
-## System Structure
+- **Baseline** — direct spatial mapping of compute  
+- **Shared** — time-multiplexed compute to reduce resource usage  
+- **Replicated** — duplicated compute to preserve throughput  
 
-The repository is organised into three main layers.
+Rather than exploring a large search space, the study focuses on a bounded grid:
 
-### Controller layer
+- `4×4`, `8×4`, `8×8`
 
-The Python controller handles:
+This produces nine canonical configurations. The constraint is intentional: keeping the space small makes it possible to measure each point carefully and interpret the results clearly.
 
-- candidate registration
-- stage execution
-- state transitions
-- artifact resolution
-- scoring and ranking
-- best-candidate tracking
+---
 
-The execution model is intentionally local and deterministic: stage order is fixed, every run receives a unique owned directory, and canonical artifacts are never overwritten in place.
+## What Happens When You Scale
 
-### Wrapper layer
-
-Stable wrapper scripts handle the real tool boundaries:
-
-- fast verification / lint
-- Vivado batch execution
-- Verilator performance collection
-
-Each wrapper emits machine-readable stage results and makes partial or failed outcomes explicit.
-
-### Evidence layer
-
-`runs/` is the primary evidence surface for measured results.
-
-That evidence includes:
-
-- canonical run directories
-- stage result JSON files
-- parsed Vivado and Verilator metrics
-- ranking reports
-- generated study summaries
-
-## Candidate Model
-
-Each candidate is represented by a manifest containing:
-
-- candidate ID
-- parameter choices
-- rationale / hypothesis
-- lightweight tags
-
-The active bounded study covers three architecture families:
-
-- **baseline**: direct compute structure
-- **shared**: reduced DSP demand through phased sharing
-- **replicated**: preserved shadow compute to expose the physical cost of replication
-
-Canonical points were measured at:
-
-- `4×4`
-- `8×4`
-- `8×8`
-
-This produces a compact architecture lattice that is small enough to run carefully and large enough to expose real scaling behaviour.
-
-## Verification and Toolflow
-
-Every candidate passes through the same deterministic execution path.
-
-### Fast verification
-
-The controller checks that:
-
-- the manifest matches the active schema
-- every searched parameter exists in the real top-level RTL
-- required toolflow entry points exist
-- Verilator lint passes
-
-This blocks invalid candidates before expensive implementation work begins.
-
-### Vivado implementation
-
-The controller forwards the real parameter values into the external Vivado batch flow and parses post-run implementation metrics such as:
-
-- LUT
-- FF
-- DSP
-- BRAM
-- WNS
-- estimated Fmax
-
-### Verilator performance collection
-
-For implementation-clean candidates, the controller also collects cycle-accurate performance metrics through the external Verilator flow, including:
-
-- latency in cycles
-- time at the target clock
-- performance counters for the same parameter point
-
-## Partial Results and Synth-Only Evidence
-
-The study preserves **synth-only** Vivado evidence when implementation fails after synthesis.
-
-That behaviour is important for architecture work, because failed implementation runs are often the strongest signals in the search space. A point that synthesises but does not implement still says something real about physical cost.
-
-The controller therefore distinguishes between:
-
-- **full implementation evidence**
-- **provisional synth-only evidence**
-
-Synth-only outcomes remain visible, are explicitly marked as provisional, and carry a ranking penalty. They are not treated as full passes.
-
-This becomes critical at `replicated 8×8`, where synthesis metrics are preserved but implementation fails on the target device.
-
-## Measured Architecture Study
-
-The canonical measured study currently covers nine MAC-array candidates across baseline, shared, and replicated families.
-
-### Baseline scaling
-
-The baseline family scales monotonically in both latency and implementation cost:
+The baseline architecture behaves as expected:
 
 | Candidate | Latency | LUT | DSP | WNS |
 | --- | ---: | ---: | ---: | ---: |
@@ -178,15 +63,35 @@ The baseline family scales monotonically in both latency and implementation cost
 | baseline 8×4 | 38 cycles | 1408 | 32 | 2.851 ns |
 | baseline 8×8 | 70 cycles | 2730 | 64 | 1.490 ns |
 
-Wider active arrays increase useful work, but also increase area and reduce timing slack.
+Increasing array size increases both performance and cost. Latency grows with the computation, and area grows with the number of compute units. Timing slack decreases as routing becomes more complex.
+
+This provides a clean reference point: straightforward parallelism scales predictably, but not cheaply.
+
+---
+
+## Two Different Ways to Trade Resources
+
+The more interesting behaviour emerges when comparing shared and replicated structures.
 
 ![Canonical LUT vs latency](/figures/canonical_lut_vs_latency.png)
 
-*Figure 1. Canonical LUT vs latency for full-pass measured candidates. Baseline scaling is monotonic, shared points stay close to baseline in LUT, and replicated points move sharply rightward in area.*
+*Figure 1. LUT versus latency across all implemented designs.*
 
-### Shared structures
+This plot captures the core distinction between the two strategies:
 
-The shared family consistently reduces DSP count relative to baseline while paying a modest schedule penalty:
+- **Sharing moves horizontally** — slightly higher latency for similar area  
+- **Replication moves vertically** — much higher area for similar latency  
+
+In other words:
+
+- sharing trades **time for hardware**  
+- replication trades **hardware for time**  
+
+These are fundamentally different ways of using resources, and they scale very differently.
+
+---
+
+## Sharing: Doing More with Less Hardware
 
 | Candidate | Latency | LUT | DSP | WNS |
 | --- | ---: | ---: | ---: | ---: |
@@ -194,48 +99,50 @@ The shared family consistently reduces DSP count relative to baseline while payi
 | shared 8×4 | 42 cycles | 1415 | 16 | 1.477 ns |
 | shared 8×8 | 74 cycles | 2749 | 32 | 1.571 ns |
 
-At `8×8`, the shared point is especially strong:
-
-- latency rises only from `70` to `74` cycles
-- LUT remains almost unchanged relative to baseline
-- DSP drops from `64` to `32`
-
-That is the cleanest measured example of sharing reducing physical cost without materially changing the shape of the design.
-
 ![Canonical DSP vs latency](/figures/canonical_dsp_vs_latency.png)
 
-*Figure 2. Canonical DSP vs latency. Shared structures cut DSP materially at every measured size, while replicated structures preserve latency only by paying much higher compute cost.*
+*Figure 2. DSP usage versus latency.*
 
-### Replicated structures
+The effect of sharing is consistent across all sizes:
 
-Replication preserves baseline-like latency where implementation still succeeds:
+- DSP usage is reduced by roughly 50%  
+- latency increases only slightly  
+- overall structure remains similar to baseline  
+
+At `8×8`, this becomes especially clear:
+
+- latency increases from 70 → 74 cycles  
+- LUT cost is almost unchanged  
+- DSP drops from 64 → 32  
+
+This suggests that sharing does not fundamentally change the computation—it simply redistributes it over time. As a result, it achieves significant resource savings without disrupting the overall behaviour of the design.
+
+---
+
+## Replication: Fast, Until It Isn't
 
 | Candidate | Latency | LUT | DSP | WNS |
 | --- | ---: | ---: | ---: | ---: |
 | replicated 4×4 | 22 cycles | 1212 | 32 | 4.034 ns |
 | replicated 8×4 | 38 cycles | 2453 | 64 | 2.435 ns |
 
-Those points preserve baseline schedule length, but at a clear area cost.
-
-At `8×8`, replication no longer closes:
-
-- `41892` LUT preserved from synthesis
-- positive synth-stage timing still visible
-- implementation fails before placement on the target Artix-7 device
-
-The result is not a missing datapoint. It is a real limit point in the study.
-
 ![Family LUT scaling](/figures/family_scaling_lut.png)
 
-*Figure 3. LUT scaling by architecture family. Shared remains close to baseline through 8×8, while replicated cost rises much faster and the replicated 8×8 point is only available as synth-only evidence.*
+*Figure 3. LUT scaling across architecture families.*
 
-![Family latency scaling](/figures/family_scaling_latency.png)
+Replication preserves baseline latency, but at a rapidly increasing cost in area. This is manageable at smaller sizes, but the trend is not sustainable.
 
-*Figure 4. Latency scaling by architecture family. Shared introduces a near-fixed schedule penalty, while replicated matches baseline latency at measured full-pass points.*
+At `8×8`, the design no longer implements:
 
-## 8×8 Comparison
+- synthesis produces a valid design (~41892 LUT)  
+- timing is still positive at synthesis  
+- placement and routing fail on the target FPGA  
 
-The `8×8` family comparison is the clearest single snapshot of the architecture tradeoff:
+This is not a missing result—it is the most important one.
+
+---
+
+## A Hard Limit Appears
 
 | Candidate | Outcome | Latency | LUT | DSP | WNS |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -243,85 +150,54 @@ The `8×8` family comparison is the clearest single snapshot of the architecture
 | shared 8×8 | full pass | 74 | 2749 | 32 | 1.571 ns |
 | replicated 8×8 | synth-only | — | 41892 | — | 2.935 ns* |
 
-\* synth-stage evidence only
-
-This makes the 8×8 result straightforward:
-
-- baseline 8×8 is a clean reference point
-- shared 8×8 is also a clean full-pass point
-- shared 8×8 is the strongest measured 8×8 tradeoff under the current score policy
-- replicated 8×8 exceeds the implementation budget of the target part
+\* synthesis-stage only
 
 ![8×8 architecture comparison](/figures/eight_by_eight_comparison.png)
 
-*Figure 5. Direct 8×8 comparison. Shared 8×8 preserves almost the same LUT and timing as baseline while halving DSP count. Replicated 8×8 is shown separately as an implementation-limited synth-only result.*
+*Figure 4. Direct comparison at 8×8.*
 
-## Ranking and Score Sensitivity
+Up to `8×4`, replication appears viable. At `8×8`, it crosses a boundary and becomes physically unrealizable.
 
-The controller ranks candidates using an explicit score policy over:
+This reveals something important:
 
-- latency
-- area
-- timing
-- penalties for incomplete or provisional evidence
+> architectural scaling is not continuous—there are hard feasibility thresholds imposed by the hardware.
 
-Under the current official policy, the best measured candidate is:
+The replicated design does not degrade gracefully. It simply stops working.
 
-**`mac_shared_4x4_sf2_dw16`**
+---
 
-The measured ranking currently begins:
+## What This Tells Us
 
-1. shared 4×4  
-2. baseline 4×4  
-3. replicated 4×4  
-4. shared 8×4  
-5. baseline 8×4  
-6. shared 8×8  
-7. replicated 8×4  
-8. baseline 8×8  
+Taken together, the results show three distinct behaviours:
 
-A separate score-sensitivity analysis was also run across alternative weighting schemes. The result is consistent:
+- **Baseline** — predictable but increasingly expensive  
+- **Shared** — efficient, with small and controlled performance cost  
+- **Replicated** — optimal locally, but fundamentally limited  
 
-- shared 4×4 wins under most tested policies
-- replicated 4×4 wins under a timing-priority policy
+The most important insight is not which design is “best”, but how differently they scale.
 
-So the robust findings are the measured architectural ones:
+In particular:
 
-- shared reduces DSP materially
-- replicated preserves latency where it still fits
-- baseline scaling increases area and latency
-- replicated 8×8 crosses a real implementation limit
+- sharing provides a robust way to stay within resource limits  
+- replication exposes a sharp boundary where physical constraints dominate  
+- implementation failure is a meaningful and informative result  
 
-The exact winner label depends on the score policy. The measured tradeoffs do not.
+---
 
-## Generated Evidence and Presentation Assets
+## Limitations
 
-On top of the canonical run model, the repository also generates a compact evidence bundle and presentation asset pack from the measured results.
+This study is intentionally narrow. It focuses on a small set of array sizes, a single FPGA target, and does not consider power or energy.
 
-Generated evidence includes:
+However, this constraint is also a strength: it allows the behaviour of each architectural strategy to be observed clearly, without confounding variables.
 
-- canonical result tables
-- ranking reports
-- score-policy sensitivity reports
-- 8×8 diagnosis summaries
-- current execution-state summaries
+---
 
-Generated presentation assets include:
+## Closing Remarks
 
-- LUT vs latency
-- DSP vs latency
-- family scaling plots
-- 8×8 comparison figures
-- website / README-ready summary snippets
+The main takeaway is simple:
 
-These assets are derived from the canonical evidence layer rather than being hand-assembled.
+> architectural ideas cannot be evaluated in isolation from the hardware they run on.
 
-## Key Takeaways
+Even small structural changes—such as sharing or replication—can produce fundamentally different scaling behaviour when mapped onto a real device.
 
-- The project provides a deterministic control plane for bounded FPGA architecture studies over a parameterised MAC-array accelerator.
-- Canonical run ownership, stage provenance, and explicit artifact resolution make the evidence layer reproducible and inspectable.
-- Shared structures consistently reduce DSP usage while introducing only modest latency overhead.
-- Replicated structures preserve baseline-like latency at smaller points, but their physical cost rises sharply with scale.
-- Replicated `8×8` exposes a real target-device implementation limit rather than a tooling defect.
-- Shared `8×8` is the strongest measured `8×8` tradeoff in the current evidence set.
-- The repository functions both as a bounded architecture study and as a reusable experimentation framework for deterministic hardware evaluation.
+By keeping the design space small and the measurements rigorous, this project shows that meaningful architectural insight does not require large-scale exploration, but careful, grounded experimentation.
