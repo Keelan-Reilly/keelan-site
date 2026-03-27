@@ -1,6 +1,7 @@
 ---
 title: "Compute Sharing in FPGA MAC Arrays Isn't a Smooth Tradeoff"
 date: 2026-03-26
+summary: A measured study of FPGA MAC array tradeoffs showing that compute sharing is a fixed cost driven by resource constraints, not a gradual optimisation.
 ---
 
 There's a common way this conversation goes in FPGA design. Someone suggests time-multiplexing a compute unit to save resources, and the response is either "great, that saves LUTs" or "bad, that kills throughput." Both answers are technically true and practically useless, because neither one tells you *when* the tradeoff makes sense.
