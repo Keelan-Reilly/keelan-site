@@ -1,6 +1,7 @@
-# Compute Sharing in FPGA MAC Arrays Isn't a Smooth Tradeoff
-
-*March 2026 · Basys 3 — XC7A35T-1CPG236C · 6 min read*
+---
+title: "Compute Sharing in FPGA MAC Arrays Isn't a Smooth Tradeoff"
+date: 2026-03-26
+---
 
 There's a common way this conversation goes in FPGA design. Someone suggests time-multiplexing a compute unit to save resources, and the response is either "great, that saves LUTs" or "bad, that kills throughput." Both answers are technically true and practically useless, because neither one tells you *when* the tradeoff makes sense.
 

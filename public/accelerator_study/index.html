@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>
-   — Keelan Reilly
+  Compute Sharing in FPGA MAC Arrays Isn&#39;t a Smooth Tradeoff — Keelan Reilly
 </title>
 
 
@@ -18,15 +18,13 @@
       <main>
         
   <article class="single">
-    <h2 class="sectionTitle"></h2>
+    <h2 class="sectionTitle">Compute Sharing in FPGA MAC Arrays Isn&#39;t a Smooth Tradeoff</h2>
     
 
     
 
     <div class="content">
-      <h1 id="compute-sharing-in-fpga-mac-arrays-isnt-a-smooth-tradeoff">Compute Sharing in FPGA MAC Arrays Isn&rsquo;t a Smooth Tradeoff</h1>
-<p><em>March 2026 · Basys 3 — XC7A35T-1CPG236C · 6 min read</em></p>
-<p>There&rsquo;s a common way this conversation goes in FPGA design. Someone suggests time-multiplexing a compute unit to save resources, and the response is either &ldquo;great, that saves LUTs&rdquo; or &ldquo;bad, that kills throughput.&rdquo; Both answers are technically true and practically useless, because neither one tells you <em>when</em> the tradeoff makes sense.</p>
+      <p>There&rsquo;s a common way this conversation goes in FPGA design. Someone suggests time-multiplexing a compute unit to save resources, and the response is either &ldquo;great, that saves LUTs&rdquo; or &ldquo;bad, that kills throughput.&rdquo; Both answers are technically true and practically useless, because neither one tells you <em>when</em> the tradeoff makes sense.</p>
 <p>I wanted a more concrete answer for a small family of MAC-array implementations, so I built all three variants, ran them through a full synthesis and routing flow on the Basys 3, and measured what actually happened.</p>
 <p>In this design family, compute sharing isn&rsquo;t a gradual tradeoff — it&rsquo;s a fixed cost you only accept when you run out of the right resource.</p>
 <h2 id="the-setup">The setup</h2>
