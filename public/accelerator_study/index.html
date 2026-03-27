@@ -4,29 +4,12 @@
     <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>
-  Measured Tradeoffs in FPGA MAC-Array Architectures — Keelan Reilly
+   — Keelan Reilly
 </title>
 
 
 <link rel="stylesheet" href="/css/main.min.css">
 
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  renderMathInElement(document.body, {
-    delimiters: [
-      { left: "\\[", right: "\\]", display: true },
-      { left: "$$", right: "$$", display: true },
-      { left: "\\(", right: "\\)", display: false }
-    ],
-    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
-    throwOnError: false
-  });
-});
-</script>
 
   </head>
   <body>
@@ -35,394 +18,107 @@ document.addEventListener("DOMContentLoaded", function () {
       <main>
         
   <article class="single">
-    <h2 class="sectionTitle">Measured Tradeoffs in FPGA MAC-Array Architectures</h2>
+    <h2 class="sectionTitle"></h2>
     
 
-    
-      <div class="kpis kpisWide">
-        
-          <div class="kpi">
-            <div class="kpiLabel">8×8 DSP reduction</div>
-            <div class="kpiValue">64 → 32 DSP</div>
-            <div class="kpiNote">shared vs baseline with &#43;4 cycle latency</div>
-          </div>
-        
-          <div class="kpi">
-            <div class="kpiLabel">Replication limit</div>
-            <div class="kpiValue">8×8 fails implementation</div>
-            <div class="kpiNote">41892 LUT at synth, does not place on Artix-7</div>
-          </div>
-        
-          <div class="kpi">
-            <div class="kpiLabel">Bounded architecture study</div>
-            <div class="kpiValue">canonical 3×3 grid</div>
-            <div class="kpiNote">baseline / shared / replicated across 4×4, 8×4, 8×8</div>
-          </div>
-        
-      </div>
     
 
     <div class="content">
-      <p>This project is a deterministic control plane for bounded FPGA architecture studies over a parameterised SystemVerilog MAC-array accelerator.</p>
-<p>The repository owns the full experimental workflow around the hardware implementation: candidate manifests, canonical run directories, fast verification, Vivado implementation, Verilator performance collection, SQLite-backed provenance, score computation, and result generation. The RTL implementation itself lives in an external accelerator repository; this project owns the measurement and evidence model around it.</p>
-<p>The study focuses on a simple question:</p>
-<ul>
-<li>how baseline, shared, and replicated MAC-array structures trade off <strong>latency, area, and timing</strong></li>
-<li>where sharing remains efficient</li>
-<li>where replication becomes physically too expensive on the target FPGA</li>
-</ul>
-<h2 id="project-overview">Project Overview</h2>
-<p>The active accelerator family is a bounded MAC-array / GEMM-style architecture with real synthesizable parameters for:</p>
-<ul>
-<li>architecture family</li>
-<li>array dimensions</li>
-<li>cluster size</li>
-<li>sharing factor</li>
-<li>arithmetic width</li>
-<li>accumulator width</li>
-<li>bounded pipeline depth</li>
-<li>memory sizing</li>
-</ul>
-<p>Each candidate is evaluated through a fixed controller-owned flow:</p>
-<p><strong>manifest registration → fast verification → Vivado implementation → Verilator performance collection → scoring/ranking</strong></p>
-<p>Every controller run produces:</p>
-<ul>
-<li>a canonical <code>runs/&lt;candidate_id&gt;/attempt_&lt;n&gt;/</code> directory</li>
-<li>stable stage outputs</li>
-<li>tracked state transitions in SQLite</li>
-<li>explicit provenance about whether ranking uses full implementation data or provisional synth-only evidence</li>
-</ul>
-<p>This keeps the study reproducible and prevents results from drifting across scratch directories, stale reports, or overwritten runs.</p>
-<h2 id="system-structure">System Structure</h2>
-<p>The repository is organised into three main layers.</p>
-<h3 id="controller-layer">Controller layer</h3>
-<p>The Python controller handles:</p>
-<ul>
-<li>candidate registration</li>
-<li>stage execution</li>
-<li>state transitions</li>
-<li>artifact resolution</li>
-<li>scoring and ranking</li>
-<li>best-candidate tracking</li>
-</ul>
-<p>The execution model is intentionally local and deterministic: stage order is fixed, every run receives a unique owned directory, and canonical artifacts are never overwritten in place.</p>
-<h3 id="wrapper-layer">Wrapper layer</h3>
-<p>Stable wrapper scripts handle the real tool boundaries:</p>
-<ul>
-<li>fast verification / lint</li>
-<li>Vivado batch execution</li>
-<li>Verilator performance collection</li>
-</ul>
-<p>Each wrapper emits machine-readable stage results and makes partial or failed outcomes explicit.</p>
-<h3 id="evidence-layer">Evidence layer</h3>
-<p><code>runs/</code> is the primary evidence surface for measured results.</p>
-<p>That evidence includes:</p>
-<ul>
-<li>canonical run directories</li>
-<li>stage result JSON files</li>
-<li>parsed Vivado and Verilator metrics</li>
-<li>ranking reports</li>
-<li>generated study summaries</li>
-</ul>
-<h2 id="candidate-model">Candidate Model</h2>
-<p>Each candidate is represented by a manifest containing:</p>
-<ul>
-<li>candidate ID</li>
-<li>parameter choices</li>
-<li>rationale / hypothesis</li>
-<li>lightweight tags</li>
-</ul>
-<p>The active bounded study covers three architecture families:</p>
-<ul>
-<li><strong>baseline</strong>: direct compute structure</li>
-<li><strong>shared</strong>: reduced DSP demand through phased sharing</li>
-<li><strong>replicated</strong>: preserved shadow compute to expose the physical cost of replication</li>
-</ul>
-<p>Canonical points were measured at:</p>
-<ul>
-<li><code>4×4</code></li>
-<li><code>8×4</code></li>
-<li><code>8×8</code></li>
-</ul>
-<p>This produces a compact architecture lattice that is small enough to run carefully and large enough to expose real scaling behaviour.</p>
-<h2 id="verification-and-toolflow">Verification and Toolflow</h2>
-<p>Every candidate passes through the same deterministic execution path.</p>
-<h3 id="fast-verification">Fast verification</h3>
-<p>The controller checks that:</p>
-<ul>
-<li>the manifest matches the active schema</li>
-<li>every searched parameter exists in the real top-level RTL</li>
-<li>required toolflow entry points exist</li>
-<li>Verilator lint passes</li>
-</ul>
-<p>This blocks invalid candidates before expensive implementation work begins.</p>
-<h3 id="vivado-implementation">Vivado implementation</h3>
-<p>The controller forwards the real parameter values into the external Vivado batch flow and parses post-run implementation metrics such as:</p>
-<ul>
-<li>LUT</li>
-<li>FF</li>
-<li>DSP</li>
-<li>BRAM</li>
-<li>WNS</li>
-<li>estimated Fmax</li>
-</ul>
-<h3 id="verilator-performance-collection">Verilator performance collection</h3>
-<p>For implementation-clean candidates, the controller also collects cycle-accurate performance metrics through the external Verilator flow, including:</p>
-<ul>
-<li>latency in cycles</li>
-<li>time at the target clock</li>
-<li>performance counters for the same parameter point</li>
-</ul>
-<h2 id="partial-results-and-synth-only-evidence">Partial Results and Synth-Only Evidence</h2>
-<p>The study preserves <strong>synth-only</strong> Vivado evidence when implementation fails after synthesis.</p>
-<p>That behaviour is important for architecture work, because failed implementation runs are often the strongest signals in the search space. A point that synthesises but does not implement still says something real about physical cost.</p>
-<p>The controller therefore distinguishes between:</p>
-<ul>
-<li><strong>full implementation evidence</strong></li>
-<li><strong>provisional synth-only evidence</strong></li>
-</ul>
-<p>Synth-only outcomes remain visible, are explicitly marked as provisional, and carry a ranking penalty. They are not treated as full passes.</p>
-<p>This becomes critical at <code>replicated 8×8</code>, where synthesis metrics are preserved but implementation fails on the target device.</p>
-<h2 id="measured-architecture-study">Measured Architecture Study</h2>
-<p>The canonical measured study currently covers nine MAC-array candidates across baseline, shared, and replicated families.</p>
-<h3 id="baseline-scaling">Baseline scaling</h3>
-<p>The baseline family scales monotonically in both latency and implementation cost:</p>
+      <h1 id="compute-sharing-in-fpga-mac-arrays-isnt-a-smooth-tradeoff">Compute Sharing in FPGA MAC Arrays Isn&rsquo;t a Smooth Tradeoff</h1>
+<p><em>March 2026 · Basys 3 — XC7A35T-1CPG236C · 6 min read</em></p>
+<p>There&rsquo;s a common way this conversation goes in FPGA design. Someone suggests time-multiplexing a compute unit to save resources, and the response is either &ldquo;great, that saves LUTs&rdquo; or &ldquo;bad, that kills throughput.&rdquo; Both answers are technically true and practically useless, because neither one tells you <em>when</em> the tradeoff makes sense.</p>
+<p>I wanted a more concrete answer for a small family of MAC-array implementations, so I built all three variants, ran them through a full synthesis and routing flow on the Basys 3, and measured what actually happened.</p>
+<p>In this design family, compute sharing isn&rsquo;t a gradual tradeoff — it&rsquo;s a fixed cost you only accept when you run out of the right resource.</p>
+<h2 id="the-setup">The setup</h2>
+<p>The family has three members. The <strong>baseline</strong> gives every MAC unit its own dedicated hardware — fully parallel, nothing shared. The <strong>LUT-saving</strong> variant time-multiplexes the compute, keeping DSP usage the same but reducing LUT consumption. The <strong>DSP-eliminating</strong> variant also time-multiplexes, but goes further and removes DSP usage entirely.</p>
+<p>I measured all three at three array sizes — 16, 32, and 64 MAC units — with a fixed accumulation depth of 32. Everything that follows is grounded in those configurations only.</p>
+<h2 id="the-chip-budget">The chip budget</h2>
+<p>The XC7A35T is a modest chip. Knowing where its ceilings are changes how you read the results.</p>
 <table>
   <thead>
       <tr>
-          <th>Candidate</th>
-          <th style="text-align: right">Latency</th>
-          <th style="text-align: right">LUT</th>
-          <th style="text-align: right">DSP</th>
-          <th style="text-align: right">WNS</th>
+          <th>Resource</th>
+          <th>Available</th>
+          <th>Baseline (64 MAC)</th>
+          <th>LUT-saving (64 MAC)</th>
+          <th>DSP-eliminating (64 MAC)</th>
       </tr>
   </thead>
   <tbody>
       <tr>
-          <td>baseline 4×4</td>
-          <td style="text-align: right">22 cycles</td>
-          <td style="text-align: right">689</td>
-          <td style="text-align: right">16</td>
-          <td style="text-align: right">3.028 ns</td>
+          <td>LUTs</td>
+          <td>20,800</td>
+          <td>4,287 (21%)</td>
+          <td>2,694 (13%)</td>
+          <td>3,620 (17%)</td>
       </tr>
       <tr>
-          <td>baseline 8×4</td>
-          <td style="text-align: right">38 cycles</td>
-          <td style="text-align: right">1408</td>
-          <td style="text-align: right">32</td>
-          <td style="text-align: right">2.851 ns</td>
+          <td>DSPs</td>
+          <td>90</td>
+          <td>64 (71%)</td>
+          <td>64 (71%)</td>
+          <td>0 (0%)</td>
       </tr>
       <tr>
-          <td>baseline 8×8</td>
-          <td style="text-align: right">70 cycles</td>
-          <td style="text-align: right">2730</td>
-          <td style="text-align: right">64</td>
-          <td style="text-align: right">1.490 ns</td>
+          <td>FFs</td>
+          <td>41,600</td>
+          <td>2,060 (5%)</td>
+          <td>1,555 (4%)</td>
+          <td>2,324 (6%)</td>
       </tr>
   </tbody>
 </table>
-<p>Wider active arrays increase useful work, but also increase area and reduce timing slack.</p>
-<p><img src="/figures/canonical_lut_vs_latency.png" alt="Canonical LUT vs latency"></p>
-<p><em>Figure 1. Canonical LUT vs latency for full-pass measured candidates. Baseline scaling is monotonic, shared points stay close to baseline in LUT, and replicated points move sharply rightward in area.</em></p>
-<h3 id="shared-structures">Shared structures</h3>
-<p>The shared family consistently reduces DSP count relative to baseline while paying a modest schedule penalty:</p>
+<p>LUTs and flip-flops are barely touched even at the largest configuration. DSPs are a different story — baseline and the LUT-saving variant both consume 64 of 90 at that scale, leaving almost no room for any other DSP-heavy logic on the chip. The DSP-eliminating variant uses none. Keep that in mind as you read the rest.</p>
+<h2 id="both-shared-variants-pay-the-same-penalty">Both shared variants pay the same penalty</h2>
+<p>The answer is the same for both. It&rsquo;s structural.</p>
+<p>Baseline latency is 33 cycles; both shared variants take 65. Throughput drops to about half of baseline at every array size, with no difference between the two shared implementations.</p>
+<p>This means the performance question and the resource question are separable. You don&rsquo;t get a better or worse schedule depending on <em>which</em> shared variant you pick — you just get a different bottleneck relieved. If the shorter schedule or full throughput is a hard requirement, both shared implementations are off the table regardless of how the resource situation looks.</p>
+<p><img src="/figures/final_tradeoff_figures/latency_vs_mac_units.png" alt="Figure 1 — latency vs MAC units">
+<em>Figure 1. Baseline holds flat at 33 cycles across all array sizes. Both shared variants hold flat at 65. This follows directly from the architecture.</em></p>
+<p><img src="/figures/final_tradeoff_figures/throughput_vs_mac_units.png" alt="Figure 2 — throughput vs MAC units">
+<em>Figure 2. Baseline throughput scales linearly with MAC units. Both shared variants track each other at roughly half of baseline — identical to each other, identical across sizes.</em></p>
+<h2 id="the-resource-savings-are-not-the-same">The resource savings are not the same</h2>
+<p>The two shared implementations diverge on which resource they actually relieve.</p>
+<p>The LUT-saving variant reduces LUT usage by about 37% relative to baseline, with DSP usage unchanged. The DSP-eliminating variant removes all DSP usage — going from 71% utilisation at the largest configuration down to zero — but its LUT savings are weaker and its flip-flop usage is higher.</p>
+<p>On a device with a large DSP budget, these tradeoffs are comparable. On the XC7A35T, they aren&rsquo;t. The LUT-saving variant addresses a resource you have plenty of. The DSP-eliminating variant addresses the one that&rsquo;s actually scarce. A 37% LUT reduction sounds meaningful until you remember you&rsquo;re starting at 21% utilisation.</p>
+<p><img src="/figures/final_tradeoff_figures/lut_vs_mac_units.png" alt="Figure 3 — LUT vs MAC units">
+<em>Figure 3. Both shared variants reduce LUT relative to baseline, with the LUT-saving variant giving the larger reduction at every scale. On this chip the absolute numbers are all well within headroom.</em></p>
+<p><img src="/figures/final_tradeoff_figures/dsp_vs_mac_units.png" alt="Figure 4 — DSP vs MAC units">
+<em>Figure 4. Baseline and the LUT-saving variant both scale with array size. The DSP-eliminating variant sits at zero across all three sizes — on a 90-DSP chip, this is the axis that matters.</em></p>
+<h2 id="when-does-sharing-make-sense">When does sharing make sense?</h2>
+<p>Only when the resource it relieves is the actual bottleneck.</p>
 <table>
   <thead>
       <tr>
-          <th>Candidate</th>
-          <th style="text-align: right">Latency</th>
-          <th style="text-align: right">LUT</th>
-          <th style="text-align: right">DSP</th>
-          <th style="text-align: right">WNS</th>
+          <th>Situation on XC7A35T</th>
+          <th>Recommended choice</th>
       </tr>
   </thead>
   <tbody>
       <tr>
-          <td>shared 4×4</td>
-          <td style="text-align: right">26 cycles</td>
-          <td style="text-align: right">695</td>
-          <td style="text-align: right">8</td>
-          <td style="text-align: right">2.024 ns</td>
+          <td>LUT and DSP budgets are comfortable, throughput matters</td>
+          <td>Baseline</td>
       </tr>
       <tr>
-          <td>shared 8×4</td>
-          <td style="text-align: right">42 cycles</td>
-          <td style="text-align: right">1415</td>
-          <td style="text-align: right">16</td>
-          <td style="text-align: right">1.477 ns</td>
+          <td>You need DSP headroom for other logic alongside the MAC array, and the longer schedule is acceptable</td>
+          <td>DSP-eliminating variant</td>
       </tr>
       <tr>
-          <td>shared 8×8</td>
-          <td style="text-align: right">74 cycles</td>
-          <td style="text-align: right">2749</td>
-          <td style="text-align: right">32</td>
-          <td style="text-align: right">1.571 ns</td>
+          <td>LUT budget is genuinely tight, DSP budget is fine</td>
+          <td>LUT-saving variant</td>
       </tr>
   </tbody>
 </table>
-<p>At <code>8×8</code>, the shared point is especially strong:</p>
-<ul>
-<li>latency rises only from <code>70</code> to <code>74</code> cycles</li>
-<li>LUT remains almost unchanged relative to baseline</li>
-<li>DSP drops from <code>64</code> to <code>32</code></li>
-</ul>
-<p>That is the cleanest measured example of sharing reducing physical cost without materially changing the shape of the design.</p>
-<p><img src="/figures/canonical_dsp_vs_latency.png" alt="Canonical DSP vs latency"></p>
-<p><em>Figure 2. Canonical DSP vs latency. Shared structures cut DSP materially at every measured size, while replicated structures preserve latency only by paying much higher compute cost.</em></p>
-<h3 id="replicated-structures">Replicated structures</h3>
-<p>Replication preserves baseline-like latency where implementation still succeeds:</p>
-<table>
-  <thead>
-      <tr>
-          <th>Candidate</th>
-          <th style="text-align: right">Latency</th>
-          <th style="text-align: right">LUT</th>
-          <th style="text-align: right">DSP</th>
-          <th style="text-align: right">WNS</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td>replicated 4×4</td>
-          <td style="text-align: right">22 cycles</td>
-          <td style="text-align: right">1212</td>
-          <td style="text-align: right">32</td>
-          <td style="text-align: right">4.034 ns</td>
-      </tr>
-      <tr>
-          <td>replicated 8×4</td>
-          <td style="text-align: right">38 cycles</td>
-          <td style="text-align: right">2453</td>
-          <td style="text-align: right">64</td>
-          <td style="text-align: right">2.435 ns</td>
-      </tr>
-  </tbody>
-</table>
-<p>Those points preserve baseline schedule length, but at a clear area cost.</p>
-<p>At <code>8×8</code>, replication no longer closes:</p>
-<ul>
-<li><code>41892</code> LUT preserved from synthesis</li>
-<li>positive synth-stage timing still visible</li>
-<li>implementation fails before placement on the target Artix-7 device</li>
-</ul>
-<p>The result is not a missing datapoint. It is a real limit point in the study.</p>
-<p><img src="/figures/family_scaling_lut.png" alt="Family LUT scaling"></p>
-<p><em>Figure 3. LUT scaling by architecture family. Shared remains close to baseline through 8×8, while replicated cost rises much faster and the replicated 8×8 point is only available as synth-only evidence.</em></p>
-<p><img src="/figures/family_scaling_latency.png" alt="Family latency scaling"></p>
-<p><em>Figure 4. Latency scaling by architecture family. Shared introduces a near-fixed schedule penalty, while replicated matches baseline latency at measured full-pass points.</em></p>
-<h2 id="88-comparison">8×8 Comparison</h2>
-<p>The <code>8×8</code> family comparison is the clearest single snapshot of the architecture tradeoff:</p>
-<table>
-  <thead>
-      <tr>
-          <th>Candidate</th>
-          <th>Outcome</th>
-          <th style="text-align: right">Latency</th>
-          <th style="text-align: right">LUT</th>
-          <th style="text-align: right">DSP</th>
-          <th style="text-align: right">WNS</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td>baseline 8×8</td>
-          <td>full pass</td>
-          <td style="text-align: right">70</td>
-          <td style="text-align: right">2730</td>
-          <td style="text-align: right">64</td>
-          <td style="text-align: right">1.490 ns</td>
-      </tr>
-      <tr>
-          <td>shared 8×8</td>
-          <td>full pass</td>
-          <td style="text-align: right">74</td>
-          <td style="text-align: right">2749</td>
-          <td style="text-align: right">32</td>
-          <td style="text-align: right">1.571 ns</td>
-      </tr>
-      <tr>
-          <td>replicated 8×8</td>
-          <td>synth-only</td>
-          <td style="text-align: right">—</td>
-          <td style="text-align: right">41892</td>
-          <td style="text-align: right">—</td>
-          <td style="text-align: right">2.935 ns*</td>
-      </tr>
-  </tbody>
-</table>
-<p>* synth-stage evidence only</p>
-<p>This makes the 8×8 result straightforward:</p>
-<ul>
-<li>baseline 8×8 is a clean reference point</li>
-<li>shared 8×8 is also a clean full-pass point</li>
-<li>shared 8×8 is the strongest measured 8×8 tradeoff under the current score policy</li>
-<li>replicated 8×8 exceeds the implementation budget of the target part</li>
-</ul>
-<p><img src="/figures/eight_by_eight_comparison.png" alt="8×8 architecture comparison"></p>
-<p><em>Figure 5. Direct 8×8 comparison. Shared 8×8 preserves almost the same LUT and timing as baseline while halving DSP count. Replicated 8×8 is shown separately as an implementation-limited synth-only result.</em></p>
-<h2 id="ranking-and-score-sensitivity">Ranking and Score Sensitivity</h2>
-<p>The controller ranks candidates using an explicit score policy over:</p>
-<ul>
-<li>latency</li>
-<li>area</li>
-<li>timing</li>
-<li>penalties for incomplete or provisional evidence</li>
-</ul>
-<p>Under the current official policy, the best measured candidate is:</p>
-<p><strong><code>mac_shared_4x4_sf2_dw16</code></strong></p>
-<p>The measured ranking currently begins:</p>
-<ol>
-<li>shared 4×4</li>
-<li>baseline 4×4</li>
-<li>replicated 4×4</li>
-<li>shared 8×4</li>
-<li>baseline 8×4</li>
-<li>shared 8×8</li>
-<li>replicated 8×4</li>
-<li>baseline 8×8</li>
-</ol>
-<p>A separate score-sensitivity analysis was also run across alternative weighting schemes. The result is consistent:</p>
-<ul>
-<li>shared 4×4 wins under most tested policies</li>
-<li>replicated 4×4 wins under a timing-priority policy</li>
-</ul>
-<p>So the robust findings are the measured architectural ones:</p>
-<ul>
-<li>shared reduces DSP materially</li>
-<li>replicated preserves latency where it still fits</li>
-<li>baseline scaling increases area and latency</li>
-<li>replicated 8×8 crosses a real implementation limit</li>
-</ul>
-<p>The exact winner label depends on the score policy. The measured tradeoffs do not.</p>
-<h2 id="generated-evidence-and-presentation-assets">Generated Evidence and Presentation Assets</h2>
-<p>On top of the canonical run model, the repository also generates a compact evidence bundle and presentation asset pack from the measured results.</p>
-<p>Generated evidence includes:</p>
-<ul>
-<li>canonical result tables</li>
-<li>ranking reports</li>
-<li>score-policy sensitivity reports</li>
-<li>8×8 diagnosis summaries</li>
-<li>current execution-state summaries</li>
-</ul>
-<p>Generated presentation assets include:</p>
-<ul>
-<li>LUT vs latency</li>
-<li>DSP vs latency</li>
-<li>family scaling plots</li>
-<li>8×8 comparison figures</li>
-<li>website / README-ready summary snippets</li>
-</ul>
-<p>These assets are derived from the canonical evidence layer rather than being hand-assembled.</p>
-<h2 id="key-takeaways">Key Takeaways</h2>
-<ul>
-<li>The project provides a deterministic control plane for bounded FPGA architecture studies over a parameterised MAC-array accelerator.</li>
-<li>Canonical run ownership, stage provenance, and explicit artifact resolution make the evidence layer reproducible and inspectable.</li>
-<li>Shared structures consistently reduce DSP usage while introducing only modest latency overhead.</li>
-<li>Replicated structures preserve baseline-like latency at smaller points, but their physical cost rises sharply with scale.</li>
-<li>Replicated <code>8×8</code> exposes a real target-device implementation limit rather than a tooling defect.</li>
-<li>Shared <code>8×8</code> is the strongest measured <code>8×8</code> tradeoff in the current evidence set.</li>
-<li>The repository functions both as a bounded architecture study and as a reusable experimentation framework for deterministic hardware evaluation.</li>
-</ul>
+<p>The realistic choice on this device collapses to two options: baseline when you need the performance and DSPs aren&rsquo;t a problem, the DSP-eliminating variant when you need those DSPs for something else. In practice, the LUT-saving variant is rarely the right answer here. You run into DSP pressure first.</p>
+<p><img src="/figures/final_decision_surface_figures/supported_choice_regions.png" alt="Figure 5 — decision surface">
+<em>Figure 5. The three-way decision surface across LUT and DSP budget space. On the XC7A35T, you hit DSP pressure long before you approach any LUT limit.</em></p>
+<h2 id="a-note-on-timing">A note on timing</h2>
+<p>Worst-case slack varies enough across implementations and sizes that I&rsquo;m not comfortable deriving a smooth switching rule from it. The slower speed grade on this part makes timing harder to generalise. Check it with a fresh implementation run rather than inferring it from the baseline.</p>
+<h2 id="the-takeaway">The takeaway</h2>
+<p>Sharing is a fixed cost. The only question is whether you&rsquo;re forced to pay it.</p>
+<p>On the XC7A35T, LUTs are not scarce. DSPs are. That makes the DSP-eliminating variant the more practically relevant of the two shared options on this chip — not because it&rsquo;s universally better, but because it addresses the constraint you&rsquo;re actually likely to hit.</p>
+<hr>
+<p><em>Target device: XC7A35T-1CPG236C (Basys 3). Available resources: 20,800 LUTs, 41,600 flip-flops, 90 DSP slices. Measurements taken post-routing at three array sizes with a fixed accumulation depth of 32. Interpolation accepted within the measured range only.</em></p>
 
     </div>
 

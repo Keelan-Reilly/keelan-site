@@ -1,187 +1,84 @@
+# Compute Sharing in FPGA MAC Arrays Isn't a Smooth Tradeoff
+
+*March 2026 · Basys 3 — XC7A35T-1CPG236C · 6 min read*
+
+There's a common way this conversation goes in FPGA design. Someone suggests time-multiplexing a compute unit to save resources, and the response is either "great, that saves LUTs" or "bad, that kills throughput." Both answers are technically true and practically useless, because neither one tells you *when* the tradeoff makes sense.
+
+I wanted a more concrete answer for a small family of MAC-array implementations, so I built all three variants, ran them through a full synthesis and routing flow on the Basys 3, and measured what actually happened.
+
+In this design family, compute sharing isn't a gradual tradeoff — it's a fixed cost you only accept when you run out of the right resource.
+
+## The setup
+
+The family has three members. The **baseline** gives every MAC unit its own dedicated hardware — fully parallel, nothing shared. The **LUT-saving** variant time-multiplexes the compute, keeping DSP usage the same but reducing LUT consumption. The **DSP-eliminating** variant also time-multiplexes, but goes further and removes DSP usage entirely.
+
+I measured all three at three array sizes — 16, 32, and 64 MAC units — with a fixed accumulation depth of 32. Everything that follows is grounded in those configurations only.
+
+## The chip budget
+
+The XC7A35T is a modest chip. Knowing where its ceilings are changes how you read the results.
+
+| Resource | Available | Baseline (64 MAC) | LUT-saving (64 MAC) | DSP-eliminating (64 MAC) |
+|---|---|---|---|---|
+| LUTs | 20,800 | 4,287 (21%) | 2,694 (13%) | 3,620 (17%) |
+| DSPs | 90 | 64 (71%) | 64 (71%) | 0 (0%) |
+| FFs | 41,600 | 2,060 (5%) | 1,555 (4%) | 2,324 (6%) |
+
+LUTs and flip-flops are barely touched even at the largest configuration. DSPs are a different story — baseline and the LUT-saving variant both consume 64 of 90 at that scale, leaving almost no room for any other DSP-heavy logic on the chip. The DSP-eliminating variant uses none. Keep that in mind as you read the rest.
+
+## Both shared variants pay the same penalty
+
+The answer is the same for both. It's structural.
+
+Baseline latency is 33 cycles; both shared variants take 65. Throughput drops to about half of baseline at every array size, with no difference between the two shared implementations.
+
+This means the performance question and the resource question are separable. You don't get a better or worse schedule depending on *which* shared variant you pick — you just get a different bottleneck relieved. If the shorter schedule or full throughput is a hard requirement, both shared implementations are off the table regardless of how the resource situation looks.
+
+![Figure 1 — latency vs MAC units](/figures/final_tradeoff_figures/latency_vs_mac_units.png)
+*Figure 1. Baseline holds flat at 33 cycles across all array sizes. Both shared variants hold flat at 65. This follows directly from the architecture.*
+
+![Figure 2 — throughput vs MAC units](/figures/final_tradeoff_figures/throughput_vs_mac_units.png)
+*Figure 2. Baseline throughput scales linearly with MAC units. Both shared variants track each other at roughly half of baseline — identical to each other, identical across sizes.*
+
+## The resource savings are not the same
+
+The two shared implementations diverge on which resource they actually relieve.
+
+The LUT-saving variant reduces LUT usage by about 37% relative to baseline, with DSP usage unchanged. The DSP-eliminating variant removes all DSP usage — going from 71% utilisation at the largest configuration down to zero — but its LUT savings are weaker and its flip-flop usage is higher.
+
+On a device with a large DSP budget, these tradeoffs are comparable. On the XC7A35T, they aren't. The LUT-saving variant addresses a resource you have plenty of. The DSP-eliminating variant addresses the one that's actually scarce. A 37% LUT reduction sounds meaningful until you remember you're starting at 21% utilisation.
+
+![Figure 3 — LUT vs MAC units](/figures/final_tradeoff_figures/lut_vs_mac_units.png)
+*Figure 3. Both shared variants reduce LUT relative to baseline, with the LUT-saving variant giving the larger reduction at every scale. On this chip the absolute numbers are all well within headroom.*
+
+![Figure 4 — DSP vs MAC units](/figures/final_tradeoff_figures/dsp_vs_mac_units.png)
+*Figure 4. Baseline and the LUT-saving variant both scale with array size. The DSP-eliminating variant sits at zero across all three sizes — on a 90-DSP chip, this is the axis that matters.*
+
+## When does sharing make sense?
+
+Only when the resource it relieves is the actual bottleneck.
+
+| Situation on XC7A35T | Recommended choice |
+|---|---|
+| LUT and DSP budgets are comfortable, throughput matters | Baseline |
+| You need DSP headroom for other logic alongside the MAC array, and the longer schedule is acceptable | DSP-eliminating variant |
+| LUT budget is genuinely tight, DSP budget is fine | LUT-saving variant |
+
+The realistic choice on this device collapses to two options: baseline when you need the performance and DSPs aren't a problem, the DSP-eliminating variant when you need those DSPs for something else. In practice, the LUT-saving variant is rarely the right answer here. You run into DSP pressure first.
+
+![Figure 5 — decision surface](/figures/final_decision_surface_figures/supported_choice_regions.png)
+*Figure 5. The three-way decision surface across LUT and DSP budget space. On the XC7A35T, you hit DSP pressure long before you approach any LUT limit.*
+
+## A note on timing
+
+Worst-case slack varies enough across implementations and sizes that I'm not comfortable deriving a smooth switching rule from it. The slower speed grade on this part makes timing harder to generalise. Check it with a fresh implementation run rather than inferring it from the baseline.
+
+## The takeaway
+
+Sharing is a fixed cost. The only question is whether you're forced to pay it.
+
+On the XC7A35T, LUTs are not scarce. DSPs are. That makes the DSP-eliminating variant the more practically relevant of the two shared options on this chip — not because it's universally better, but because it addresses the constraint you're actually likely to hit.
+
 ---
-title: "Measured Tradeoffs in FPGA MAC-Array Architectures"
-date: 2026-03-17
-summary: "An empirical exploration of how compute sharing and replication shape the real-world behaviour of FPGA MAC-array accelerators, grounded in automated, reproducible hardware experiments."
-math: true
-kpis:
-  - label: "8×8 DSP reduction"
-    value: "64 → 32 DSP"
-    note: "shared vs baseline with +4 cycle latency"
 
-  - label: "Replication limit"
-    value: "8×8 fails implementation"
-    note: "41892 LUT at synth, does not place on Artix-7"
-
-  - label: "Bounded architecture study"
-    value: "canonical 3×3 grid"
-    note: "baseline / shared / replicated across 4×4, 8×4, 8×8"
----
-
-## Introduction
-
-Most discussions of accelerator design reduce to a simple idea: more parallelism leads to more performance. Wider arrays, more compute units, higher throughput. In practice, this view is incomplete. Once designs are mapped onto real hardware—especially FPGAs—physical constraints such as routing congestion, area limits, and timing closure begin to dominate.
-
-This project explores that gap between architectural intuition and physical reality.
-
-The focus is a simple but important question:
-
-> how do different structural approaches to compute—baseline, shared, and replicated—actually behave when implemented on real hardware?
-
-Rather than proposing a new architecture, the work takes an empirical approach. A small, controlled design space is explored and every point is measured using a consistent toolflow. The goal is not to optimise a single design, but to understand how different architectural choices scale—and where they stop working.
-
-To make this possible, the entire workflow was automated. A Python-based controller drives candidate generation, verification, synthesis, implementation, and simulation, producing a deterministic set of results for each configuration. This ensures that every data point is directly comparable, and that failed implementations are preserved as part of the evidence rather than discarded.
-
-This matters because many architectural ideas look equivalent at a high level, but diverge significantly under physical constraints. In FPGA-based systems in particular, where resources are fixed and routing is expensive, understanding these tradeoffs is critical.
-
-
-## A Small but Revealing Design Space
-
-The study is built around a parameterised MAC-array accelerator, representative of GEMM-style compute structures used in machine learning and signal processing.
-
-Three architectural strategies are considered:
-
-- **Baseline** — direct spatial mapping of compute  
-- **Shared** — time-multiplexed compute to reduce resource usage  
-- **Replicated** — duplicated compute to preserve throughput  
-
-Rather than exploring a large search space, the study focuses on a bounded grid:
-
-- `4×4`, `8×4`, `8×8`
-
-This produces nine canonical configurations. The constraint is intentional: keeping the space small makes it possible to measure each point carefully and interpret the results clearly.
-
-## What Happens When You Scale
-
-The baseline architecture behaves as expected:
-
-| Candidate | Latency | LUT | DSP | WNS |
-| --- | ---: | ---: | ---: | ---: |
-| baseline 4×4 | 22 cycles | 689 | 16 | 3.028 ns |
-| baseline 8×4 | 38 cycles | 1408 | 32 | 2.851 ns |
-| baseline 8×8 | 70 cycles | 2730 | 64 | 1.490 ns |
-
-Increasing array size increases both performance and cost. Latency grows with the computation, and area grows with the number of compute units. Timing slack decreases as routing becomes more complex.
-
-This provides a clean reference point: straightforward parallelism scales predictably, but not cheaply.
-
-## Two Different Ways to Trade Resources
-
-The more interesting behaviour emerges when comparing shared and replicated structures.
-
-![Canonical LUT vs latency](/figures/canonical_lut_vs_latency.png)
-
-*Figure 1. LUT versus latency across all implemented designs.*
-
-This plot captures the core distinction between the two strategies:
-
-- **Sharing moves horizontally** — slightly higher latency for similar area  
-- **Replication moves vertically** — much higher area for similar latency  
-
-In other words:
-
-- sharing trades **time for hardware**  
-- replication trades **hardware for time**  
-
-These are fundamentally different ways of using resources, and they scale very differently.
-
-## Sharing: Doing More with Less Hardware
-
-| Candidate | Latency | LUT | DSP | WNS |
-| --- | ---: | ---: | ---: | ---: |
-| shared 4×4 | 26 cycles | 695 | 8 | 2.024 ns |
-| shared 8×4 | 42 cycles | 1415 | 16 | 1.477 ns |
-| shared 8×8 | 74 cycles | 2749 | 32 | 1.571 ns |
-
-
-![Canonical DSP vs latency](/figures/canonical_dsp_vs_latency.png)
-
-*Figure 2. DSP usage versus latency.*
-
-The effect of sharing is consistent across all sizes:
-
-- DSP usage is reduced by roughly 50%  
-- latency increases only slightly  
-- overall structure remains similar to baseline  
-
-At `8×8`, this becomes especially clear:
-
-- latency increases from 70 → 74 cycles  
-- LUT cost is almost unchanged  
-- DSP drops from 64 → 32  
-
-This suggests that sharing does not fundamentally change the computation—it simply redistributes it over time. As a result, it achieves significant resource savings without disrupting the overall behaviour of the design.
-
-## Replication: Fast, Until It Isn't
-
-| Candidate | Latency | LUT | DSP | WNS |
-| --- | ---: | ---: | ---: | ---: |
-| replicated 4×4 | 22 cycles | 1212 | 32 | 4.034 ns |
-| replicated 8×4 | 38 cycles | 2453 | 64 | 2.435 ns |
-
-![Family LUT scaling](/figures/family_scaling_lut.png)
-
-*Figure 3. LUT scaling across architecture families.*
-
-Replication preserves baseline latency, but at a rapidly increasing cost in area. This is manageable at smaller sizes, but the trend is not sustainable.
-
-At `8×8`, the design no longer implements:
-
-- synthesis produces a valid design (~41892 LUT)  
-- timing is still positive at synthesis  
-- placement and routing fail on the target FPGA  
-
-This is not a missing result—it is the most important one.
-
-## A Hard Limit Appears
-
-| Candidate | Outcome | Latency | LUT | DSP | WNS |
-| --- | --- | ---: | ---: | ---: | ---: |
-| baseline 8×8 | full pass | 70 | 2730 | 64 | 1.490 ns |
-| shared 8×8 | full pass | 74 | 2749 | 32 | 1.571 ns |
-| replicated 8×8 | synth-only | — | 41892 | — | 2.935 ns* |
-
-\* synthesis-stage only
-
-![8×8 architecture comparison](/figures/eight_by_eight_comparison.png)
-
-*Figure 4. Direct comparison at 8×8.*
-
-Up to `8×4`, replication appears viable. At `8×8`, it crosses a boundary and becomes physically unrealizable.
-
-This reveals something important:
-
-> architectural scaling is not continuous—there are hard feasibility thresholds imposed by the hardware.
-
-The replicated design does not degrade gracefully. It simply stops working.
-
-## What This Tells Us
-
-Taken together, the results show three distinct behaviours:
-
-- **Baseline** — predictable but increasingly expensive  
-- **Shared** — efficient, with small and controlled performance cost  
-- **Replicated** — optimal locally, but fundamentally limited  
-
-The most important insight is not which design is “best”, but how differently they scale.
-
-In particular:
-
-- sharing provides a robust way to stay within resource limits  
-- replication exposes a sharp boundary where physical constraints dominate  
-- implementation failure is a meaningful and informative result  
-
-## Limitations
-
-This study is intentionally narrow. It focuses on a small set of array sizes, a single FPGA target, and does not consider power or energy.
-
-However, this constraint is also a strength: it allows the behaviour of each architectural strategy to be observed clearly, without confounding variables.
-
-## Closing Remarks
-
-The main takeaway is simple:
-
-> architectural ideas cannot be evaluated in isolation from the hardware they run on.
-
-Even small structural changes—such as sharing or replication—can produce fundamentally different scaling behaviour when mapped onto a real device.
-
-By keeping the design space small and the measurements rigorous, this project shows that meaningful architectural insight does not require large-scale exploration, but careful, grounded experimentation.
+*Target device: XC7A35T-1CPG236C (Basys 3). Available resources: 20,800 LUTs, 41,600 flip-flops, 90 DSP slices. Measurements taken post-routing at three array sizes with a fixed accumulation depth of 32. Interpolation accepted within the measured range only.*

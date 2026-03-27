@@ -19,8 +19,8 @@
         <header class="siteHeader">
   <h1 class="name"><a class="plain" href="/">Keelan Reilly</a></h1>
   <p class="about">
-    Electronic Engineering student interested in FPGA design, low-latency digital systems, and ML inference hardware.
-    This site is a running write-up of projects where I’ve built and verified systems end-to-end.
+    Electronic Engineering student building FPGA-based hardware systems and accelerator architectures.
+    Work focuses on measured RTL design, implementation, and performance tradeoffs under real toolflows.
   </p>
   <nav class="navrow">
     <a href="https://github.com/Keelan-Reilly">GitHub</a>
@@ -39,34 +39,12 @@
     
       <article class="card">
         <div class="cardTop">
-          <h3 class="cardTitle"><a href="/accelerator_study/">Deterministic FPGA MAC-Array Design Space Exploration</a></h3>
+          <h3 class="cardTitle"><a href="/accelerator_study/">Measured Tradeoffs and Decision Boundaries in FPGA MAC-Array Architectures</a></h3>
           
         </div>
 
-        <p class="muted">A deterministic experimentation framework for bounded FPGA architecture studies over parameterised SystemVerilog MAC-array accelerators, with canonical run provenance, automated verification/synthesis/performance collection, and measured tradeoff analysis across baseline, shared, and replicated compute structures.</p>
+        <p class="muted">A measured study of how compute sharing alters resource usage, performance, and architectural choice in FPGA MAC arrays, with explicit decision boundaries and validity limits.</p>
 
-        
-          <div class="kpis">
-            
-              <div class="kpi">
-                <div class="kpiLabel">Best measured 8×8 design</div>
-                <div class="kpiValue">shared 8×8</div>
-                <div class="kpiNote">74 cycles, 2749 LUT, 32 DSP, 1.571 ns WNS</div>
-              </div>
-            
-              <div class="kpi">
-                <div class="kpiLabel">Replicated 8×8 result</div>
-                <div class="kpiValue">synth-only</div>
-                <div class="kpiNote">41892 LUT preserved before implementation failure</div>
-              </div>
-            
-              <div class="kpi">
-                <div class="kpiLabel">Canonical study coverage</div>
-                <div class="kpiValue">9 candidates</div>
-                <div class="kpiNote">baseline / shared / replicated across 4×4, 8×4, and 8×8</div>
-              </div>
-            
-          </div>
         
       </article>
     

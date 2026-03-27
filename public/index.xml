@@ -6,14 +6,14 @@
     <description>Recent content in Projects on Keelan Reilly</description>
     <generator>Hugo</generator>
     <language>en-uk</language>
-    <lastBuildDate>Tue, 17 Mar 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 26 Mar 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="//localhost:1313/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Deterministic FPGA MAC-Array Design Space Exploration</title>
+      <title>Measured Tradeoffs and Decision Boundaries in FPGA MAC-Array Architectures</title>
       <link>//localhost:1313/accelerator_study/</link>
-      <pubDate>Tue, 17 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 26 Mar 2026 00:00:00 +0000</pubDate>
       <guid>//localhost:1313/accelerator_study/</guid>
-      <description>A deterministic experimentation framework for bounded FPGA architecture studies over parameterised SystemVerilog MAC-array accelerators, with canonical run provenance, automated verification/synthesis/performance collection, and measured tradeoff analysis across baseline, shared, and replicated compute structures.</description>
+      <description>A measured study of how compute sharing alters resource usage, performance, and architectural choice in FPGA MAC arrays, with explicit decision boundaries and validity limits.</description>
     </item>
     <item>
       <title>FPGA Market Data Parser (Low-Latency Pipeline)</title>
