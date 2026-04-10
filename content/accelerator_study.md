@@ -1,24 +1,24 @@
 ---
 title: "Compute Sharing in FPGA MAC Arrays Isn't a Smooth Tradeoff"
 date: 2026-03-26
-summary: A measured study of FPGA MAC array tradeoffs showing that compute sharing is a fixed cost driven by resource constraints, not a gradual optimisation.
+summary: A measured comparison of FPGA MAC array variants showing that compute sharing is only worth its fixed cost under genuine resource pressure.
 ---
 
-There's a common way this conversation goes in FPGA design. Someone suggests time-multiplexing a compute unit to save resources, and the response is either "great, that saves LUTs" or "bad, that kills throughput." Both answers are technically true and practically useless, because neither one tells you *when* the tradeoff makes sense.
+Time-multiplexing a compute unit in FPGA design is often described as a simple area-throughput tradeoff: it saves resources, but reduces performance. That is broadly true, but it is too coarse to be useful in practice. The relevant question is not whether sharing helps area or hurts throughput, but under what conditions the tradeoff is actually worth accepting.
 
-I wanted a more concrete answer for a small family of MAC-array implementations, so I built all three variants, ran them through a full synthesis and routing flow on the Basys 3, and measured what actually happened.
+To make that question concrete, I implemented three MAC-array variants, ran each through synthesis and place-and-route on the Basys 3, and compared the resulting resource and performance behaviour.
 
-In this design family, compute sharing isn't a gradual tradeoff — it's a fixed cost you only accept when you run out of the right resource.
+For this design family, compute sharing is not a smooth optimisation knob. It behaves more like a fixed performance cost that only becomes worth paying when it relieves the resource that is actually limiting the design.
 
 ## The setup
 
-The family has three members. The **baseline** gives every MAC unit its own dedicated hardware — fully parallel, nothing shared. The **LUT-saving** variant time-multiplexes the compute, keeping DSP usage the same but reducing LUT consumption. The **DSP-eliminating** variant also time-multiplexes, but goes further and removes DSP usage entirely.
+The design family contains three variants. The **baseline** assigns dedicated hardware to each MAC unit, with no sharing. The **LUT-saving** variant time-multiplexes the compute while keeping DSP usage unchanged, reducing LUT consumption. The **DSP-eliminating** variant also time-multiplexes the compute, but removes DSP usage entirely.
 
-I measured all three at three array sizes — 16, 32, and 64 MAC units — with a fixed accumulation depth of 32. Everything that follows is grounded in those configurations only.
+All three were measured at array sizes of 16, 32, and 64 MAC units, with a fixed accumulation depth of 32. The conclusions in this post apply to those configurations only.
 
 ## The chip budget
 
-The XC7A35T is a modest chip. Knowing where its ceilings are changes how you read the results.
+The XC7A35T is a relatively small device, so the practical meaning of the results depends strongly on which resources are actually scarce.
 
 | Resource | Available | Baseline (64 MAC) | LUT-saving (64 MAC) | DSP-eliminating (64 MAC) |
 |---|---|---|---|---|
@@ -26,61 +26,61 @@ The XC7A35T is a modest chip. Knowing where its ceilings are changes how you rea
 | DSPs | 90 | 64 (71%) | 64 (71%) | 0 (0%) |
 | FFs | 41,600 | 2,060 (5%) | 1,555 (4%) | 2,324 (6%) |
 
-LUTs and flip-flops are barely touched even at the largest configuration. DSPs are a different story — baseline and the LUT-saving variant both consume 64 of 90 at that scale, leaving almost no room for any other DSP-heavy logic on the chip. The DSP-eliminating variant uses none. Keep that in mind as you read the rest.
+Even at the largest configuration, LUT and flip-flop usage remain modest. DSP usage is much more constrained: both the baseline and LUT-saving variants consume 64 of the 90 available DSP slices, leaving limited headroom for other DSP-based logic. The DSP-eliminating variant removes that pressure entirely.
 
-## Both shared variants pay the same penalty
+## Both shared variants incur the same performance cost
 
-The answer is the same for both. It's structural.
+For this design family, both shared implementations show the same latency and throughput behaviour.
 
-Baseline latency is 33 cycles; both shared variants take 65. Throughput drops to about half of baseline at every array size, with no difference between the two shared implementations.
+The baseline completes in 33 cycles, while both shared variants require 65 cycles. Throughput is therefore reduced by roughly a factor of two, with no meaningful difference between the two shared implementations at any tested array size.
 
-This means the performance question and the resource question are separable. You don't get a better or worse schedule depending on *which* shared variant you pick — you just get a different bottleneck relieved. If the shorter schedule or full throughput is a hard requirement, both shared implementations are off the table regardless of how the resource situation looks.
+This is useful because it separates the performance question from the resource question. In these designs, the choice between shared variants does not change the scheduling penalty; it only changes which resource is being conserved. If the longer schedule is unacceptable, then neither shared design is a viable option.
 
 ![Figure 1 — latency vs MAC units](/figures/final_tradeoff_figures/latency_vs_mac_units.png)
-*Figure 1. Baseline holds flat at 33 cycles across all array sizes. Both shared variants hold flat at 65. This follows directly from the architecture.*
+*Figure 1. Baseline latency remains at 33 cycles across all measured sizes, while both shared variants remain at 65 cycles.*
 
 ![Figure 2 — throughput vs MAC units](/figures/final_tradeoff_figures/throughput_vs_mac_units.png)
-*Figure 2. Baseline throughput scales linearly with MAC units. Both shared variants track each other at roughly half of baseline — identical to each other, identical across sizes.*
+*Figure 2. Baseline throughput scales linearly with MAC count. Both shared variants remain at roughly half of baseline throughput across all measured sizes.*
 
-## The resource savings are not the same
+## The resource savings differ in a way that matters
 
-The two shared implementations diverge on which resource they actually relieve.
+Although the two shared variants have the same performance penalty, they relieve different resources.
 
-The LUT-saving variant reduces LUT usage by about 37% relative to baseline, with DSP usage unchanged. The DSP-eliminating variant removes all DSP usage — going from 71% utilisation at the largest configuration down to zero — but its LUT savings are weaker and its flip-flop usage is higher.
+Relative to baseline, the LUT-saving variant reduces LUT usage by about 37% while leaving DSP usage unchanged. The DSP-eliminating variant removes DSP usage completely, but achieves a smaller LUT reduction and uses more flip-flops.
 
-On a device with a large DSP budget, these tradeoffs are comparable. On the XC7A35T, they aren't. The LUT-saving variant addresses a resource you have plenty of. The DSP-eliminating variant addresses the one that's actually scarce. A 37% LUT reduction sounds meaningful until you remember you're starting at 21% utilisation.
+Whether these are comparable tradeoffs depends on the target device. On a device with abundant DSPs and tighter LUT limits, the LUT-saving variant could be attractive. On the XC7A35T, that is not the case. LUT usage is low in absolute terms across all three designs, while DSP usage is already high in the baseline and LUT-saving implementations. On this device, DSP pressure is the more important constraint.
 
 ![Figure 3 — LUT vs MAC units](/figures/final_tradeoff_figures/lut_vs_mac_units.png)
-*Figure 3. Both shared variants reduce LUT relative to baseline, with the LUT-saving variant giving the larger reduction at every scale. On this chip the absolute numbers are all well within headroom.*
+*Figure 3. Both shared variants reduce LUT usage relative to baseline, with the LUT-saving variant achieving the larger reduction at each measured size.*
 
 ![Figure 4 — DSP vs MAC units](/figures/final_tradeoff_figures/dsp_vs_mac_units.png)
-*Figure 4. Baseline and the LUT-saving variant both scale with array size. The DSP-eliminating variant sits at zero across all three sizes — on a 90-DSP chip, this is the axis that matters.*
+*Figure 4. Baseline and LUT-saving DSP usage scale with array size, while the DSP-eliminating variant uses no DSP slices at any measured point.*
 
 ## When does sharing make sense?
 
-Only when the resource it relieves is the actual bottleneck.
+Sharing only makes sense when it relieves the resource that is actually limiting the design.
 
 | Situation on XC7A35T | Recommended choice |
 |---|---|
-| LUT and DSP budgets are comfortable, throughput matters | Baseline |
-| You need DSP headroom for other logic alongside the MAC array, and the longer schedule is acceptable | DSP-eliminating variant |
-| LUT budget is genuinely tight, DSP budget is fine | LUT-saving variant |
+| LUT and DSP budgets are both comfortable, and throughput matters | Baseline |
+| DSP headroom is needed for other logic, and the longer schedule is acceptable | DSP-eliminating variant |
+| LUT budget is genuinely tight, while DSP budget is still comfortable | LUT-saving variant |
 
-The realistic choice on this device collapses to two options: baseline when you need the performance and DSPs aren't a problem, the DSP-eliminating variant when you need those DSPs for something else. In practice, the LUT-saving variant is rarely the right answer here. You run into DSP pressure first.
+On the XC7A35T, this usually reduces to two practical choices: the baseline when throughput matters and DSP usage is acceptable, or the DSP-eliminating variant when DSP slices must be reserved for other parts of the design. The LUT-saving variant is less compelling on this device because it reduces a resource that is not under much pressure.
 
 ![Figure 5 — decision surface](/figures/final_decision_surface_figures/supported_choice_regions.png)
-*Figure 5. The three-way decision surface across LUT and DSP budget space. On the XC7A35T, you hit DSP pressure long before you approach any LUT limit.*
+*Figure 5. Decision regions over LUT and DSP budget space. On the XC7A35T, DSP pressure appears before LUT pressure across the measured design range.*
 
 ## A note on timing
 
-Worst-case slack varies enough across implementations and sizes that I'm not comfortable deriving a smooth switching rule from it. The slower speed grade on this part makes timing harder to generalise. Check it with a fresh implementation run rather than inferring it from the baseline.
+Worst-case slack varies across implementations and array sizes, and I do not think the current data supports a clean timing-based switching rule. On this part, timing behaviour should be checked with a fresh implementation run rather than inferred from another design point.
 
 ## The takeaway
 
-Sharing is a fixed cost. The only question is whether you're forced to pay it.
+In this MAC-array family, sharing introduces a fixed performance penalty. The relevant design question is therefore not whether sharing saves resources in the abstract, but whether that penalty is justified by the specific resource constraint of the target device.
 
-On the XC7A35T, LUTs are not scarce. DSPs are. That makes the DSP-eliminating variant the more practically relevant of the two shared options on this chip — not because it's universally better, but because it addresses the constraint you're actually likely to hit.
+For the XC7A35T, LUTs remain relatively unconstrained while DSPs become scarce much earlier. Under those conditions, the DSP-eliminating variant is the more relevant shared design, not because it is universally preferable, but because it addresses the resource that is more likely to limit the overall system.
 
 ---
 
-*Target device: XC7A35T-1CPG236C (Basys 3). Available resources: 20,800 LUTs, 41,600 flip-flops, 90 DSP slices. Measurements taken post-routing at three array sizes with a fixed accumulation depth of 32. Interpolation accepted within the measured range only.*
+*Target device: XC7A35T-1CPG236C (Basys 3). Available resources: 20,800 LUTs, 41,600 flip-flops, 90 DSP slices. Measurements taken post-routing at three array sizes with a fixed accumulation depth of 32. Interpolation is only assumed within the measured range.*
