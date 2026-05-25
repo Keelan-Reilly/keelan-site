@@ -2,38 +2,38 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Projects on Keelan Reilly</title>
-    <link>//localhost:1313/</link>
+    <link>/</link>
     <description>Recent content in Projects on Keelan Reilly</description>
     <generator>Hugo</generator>
     <language>en-uk</language>
     <lastBuildDate>Mon, 25 May 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="//localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Formula Student BMS — 75-Cell Hardware and Firmware Stack</title>
-      <link>//localhost:1313/bms/</link>
+      <link>/bms/</link>
       <pubDate>Mon, 25 May 2026 00:00:00 +0000</pubDate>
-      <guid>//localhost:1313/bms/</guid>
+      <guid>/bms/</guid>
       <description>A hardware-led Formula Student BMS project covering STM32 master-board design, LTC6812 cell-monitoring hardware, dual isoSPI chains, pack measurement, safety permission logic, embedded firmware, desktop tooling, and pre-hardware validation.</description>
     </item>
     <item>
       <title>Compute Sharing in FPGA MAC Arrays Isn&#39;t a Smooth Tradeoff</title>
-      <link>//localhost:1313/accelerator_study/</link>
+      <link>/accelerator_study/</link>
       <pubDate>Thu, 26 Mar 2026 00:00:00 +0000</pubDate>
-      <guid>//localhost:1313/accelerator_study/</guid>
+      <guid>/accelerator_study/</guid>
       <description>A measured comparison of FPGA MAC array variants showing that compute sharing is only worth its fixed cost under genuine resource pressure.</description>
     </item>
     <item>
       <title>FPGA Market Data Parser (Low-Latency Pipeline)</title>
-      <link>//localhost:1313/market_data_parser/</link>
+      <link>/market_data_parser/</link>
       <pubDate>Sat, 20 Dec 2025 00:00:00 +0000</pubDate>
-      <guid>//localhost:1313/market_data_parser/</guid>
+      <guid>/market_data_parser/</guid>
       <description>This project implements a low-latency market data ingestion pipeline in SystemVerilog. I built it to understand how protocol handling, backpressure, and control timing shape end-to-end latency in real hardware pipelines.</description>
     </item>
     <item>
       <title>Quantised CNN Inference Accelerator</title>
-      <link>//localhost:1313/cnn-accelerator/</link>
+      <link>/cnn-accelerator/</link>
       <pubDate>Sat, 20 Dec 2025 00:00:00 +0000</pubDate>
-      <guid>//localhost:1313/cnn-accelerator/</guid>
+      <guid>/cnn-accelerator/</guid>
       <description>A fixed-function FPGA CNN inference accelerator implemented in SystemVerilog. The project explores how architectural decisions around data layout, precision, and scheduling affect performance and flexibility.</description>
     </item>
   </channel>

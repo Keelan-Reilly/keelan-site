@@ -16,19 +16,19 @@ kpis:
 
 This project is a 75-cell Formula Student battery management system spanning custom hardware, embedded firmware, diagnostics, desktop tooling, and bring-up planning.
 
-The system is built around an STM32F303 master board and LTC6812-based measurement boards. It handles cell-voltage acquisition, temperature measurement, passive balancing, pack-voltage and current sensing, isolated isoSPI communication, power-latch behaviour, CAN/USB interfaces, fault handling, and safety permission outputs.
+The system is built around an STM32 master board and LTC6812-based measurement boards. It handles cell-voltage acquisition, temperature measurement, passive balancing, pack-voltage and current sensing, isolated isoSPI communication, power-latch behaviour, CAN/USB interfaces, fault handling, and safety permission outputs.
 
 The hardware began from an ENNOID-style reference architecture, but the final system required substantial redesign and remapping. The firmware was rewritten around the actual hardware contract rather than carried over from the original codebase.
 
 ## System overview
 
-The BMS monitors a 75-cell lithium-ion accumulator using LTC6812 analogue front-end ICs connected over isolated isoSPI links to an STM32F303 master controller.
+The BMS monitors a 75-cell lithium-ion accumulator using LTC6812 analogue front-end ICs connected over isolated isoSPI links to an STM32 master controller.
 
 The architecture uses separate measurement paths for cell voltages and temperature sensing. The master board selects between the measurement chains, reads pack-level signals, controls safety-related outputs, and communicates with external tools through USB/UART and CAN.
 
 At a high level, the system includes:
 
-- STM32F303 master board
+- STM32 master board
 - LTC6812-based cell-monitoring boards
 - separate temperature measurement chain
 - LTC6820-based isoSPI interfaces
@@ -47,7 +47,7 @@ The main design focus was keeping the electrical design, firmware semantics, and
 ![BMS master board render](/figures/bms/master_board_render.png)
 *STM32 master board for isoSPI communication, pack measurement, power latch, CAN/USB, and permission outputs.*
 
-The master board is the central control and interface board for the BMS. It contains the STM32F303 controller, isoSPI bridge circuitry, local measurement interfaces, power-latch logic, USB/CAN communication, and outputs into the vehicle safety system.
+The master board is the central control and interface board for the BMS. It contains the STM32 controller, isoSPI bridge circuitry, local measurement interfaces, power-latch logic, USB/CAN communication, and outputs into the vehicle safety system.
 
 The STM32 controls two isoSPI interfaces over a shared SPI bus with independent chip selects. This allows the firmware to address the cell-measurement and temperature-measurement chains separately while keeping the physical interface compact.
 
@@ -106,7 +106,7 @@ Safety-critical GPIO writes are centralised in the firmware. Other modules can r
 
 ## Firmware architecture
 
-The firmware was rewritten in embedded C for the STM32F303 around the revised hardware design.
+The firmware was rewritten in embedded C for the STM32 around the revised hardware design.
 
 It covers:
 
@@ -164,7 +164,7 @@ The pre-hardware work was intended to reduce integration risk before first power
 
 ## Technical highlights
 
-- STM32F303 master board for Formula Student BMS control
+- STM32 master board for Formula Student BMS control
 - 75-cell LTC6812-based measurement architecture
 - dual isoSPI measurement chains with separate chip selects
 - LTC6820-based isolated communication links

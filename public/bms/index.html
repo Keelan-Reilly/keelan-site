@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8" />
+  <head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,14 +72,14 @@
 
     <div class="article-body">
       <p>This project is a 75-cell Formula Student battery management system spanning custom hardware, embedded firmware, diagnostics, desktop tooling, and bring-up planning.</p>
-<p>The system is built around an STM32F303 master board and LTC6812-based measurement boards. It handles cell-voltage acquisition, temperature measurement, passive balancing, pack-voltage and current sensing, isolated isoSPI communication, power-latch behaviour, CAN/USB interfaces, fault handling, and safety permission outputs.</p>
+<p>The system is built around an STM32 master board and LTC6812-based measurement boards. It handles cell-voltage acquisition, temperature measurement, passive balancing, pack-voltage and current sensing, isolated isoSPI communication, power-latch behaviour, CAN/USB interfaces, fault handling, and safety permission outputs.</p>
 <p>The hardware began from an ENNOID-style reference architecture, but the final system required substantial redesign and remapping. The firmware was rewritten around the actual hardware contract rather than carried over from the original codebase.</p>
 <h2 id="system-overview">System overview</h2>
-<p>The BMS monitors a 75-cell lithium-ion accumulator using LTC6812 analogue front-end ICs connected over isolated isoSPI links to an STM32F303 master controller.</p>
+<p>The BMS monitors a 75-cell lithium-ion accumulator using LTC6812 analogue front-end ICs connected over isolated isoSPI links to an STM32 master controller.</p>
 <p>The architecture uses separate measurement paths for cell voltages and temperature sensing. The master board selects between the measurement chains, reads pack-level signals, controls safety-related outputs, and communicates with external tools through USB/UART and CAN.</p>
 <p>At a high level, the system includes:</p>
 <ul>
-<li>STM32F303 master board</li>
+<li>STM32 master board</li>
 <li>LTC6812-based cell-monitoring boards</li>
 <li>separate temperature measurement chain</li>
 <li>LTC6820-based isoSPI interfaces</li>
@@ -95,7 +95,7 @@
 <h2 id="master-board-hardware">Master board hardware</h2>
 <p><img src="/figures/bms/master_board_render.png" alt="BMS master board render">
 <em>STM32 master board for isoSPI communication, pack measurement, power latch, CAN/USB, and permission outputs.</em></p>
-<p>The master board is the central control and interface board for the BMS. It contains the STM32F303 controller, isoSPI bridge circuitry, local measurement interfaces, power-latch logic, USB/CAN communication, and outputs into the vehicle safety system.</p>
+<p>The master board is the central control and interface board for the BMS. It contains the STM32 controller, isoSPI bridge circuitry, local measurement interfaces, power-latch logic, USB/CAN communication, and outputs into the vehicle safety system.</p>
 <p>The STM32 controls two isoSPI interfaces over a shared SPI bus with independent chip selects. This allows the firmware to address the cell-measurement and temperature-measurement chains separately while keeping the physical interface compact.</p>
 <p>The board also measures pack-level signals used for system state and precharge validation. Battery-side voltage, load-side voltage, current, and charger presence are treated as separate hardware signals rather than collapsed into a single generic pack measurement. This distinction is important during contactor and precharge transitions, where different nodes in the accumulator can sit at different potentials.</p>
 <p>The master board also includes wake and hold circuitry. External wake sources can bring the board up, after which firmware can assert a power-hold signal to keep the system alive. During shutdown, firmware releases the latch after placing safety-relevant outputs into their safe state.</p>
@@ -125,7 +125,7 @@
 <p>A major part of the hardware/firmware integration was ensuring that output names, polarities, and downstream meanings were correctly represented in code. Some inherited signal names no longer matched their new electrical function, so the firmware abstractions were rewritten to match the board rather than preserve legacy terminology.</p>
 <p>Safety-critical GPIO writes are centralised in the firmware. Other modules can request permission states, but the actual output writes pass through one controlled path.</p>
 <h2 id="firmware-architecture">Firmware architecture</h2>
-<p>The firmware was rewritten in embedded C for the STM32F303 around the revised hardware design.</p>
+<p>The firmware was rewritten in embedded C for the STM32 around the revised hardware design.</p>
 <p>It covers:</p>
 <ul>
 <li>board support and peripheral setup</li>
@@ -163,7 +163,7 @@
 <p>The pre-hardware work was intended to reduce integration risk before first power-on by making the firmware, protocol, UI, diagnostics, and bring-up procedures coherent ahead of the physical board tests.</p>
 <h2 id="technical-highlights">Technical highlights</h2>
 <ul>
-<li>STM32F303 master board for Formula Student BMS control</li>
+<li>STM32 master board for Formula Student BMS control</li>
 <li>75-cell LTC6812-based measurement architecture</li>
 <li>dual isoSPI measurement chains with separate chip selects</li>
 <li>LTC6820-based isolated communication links</li>
