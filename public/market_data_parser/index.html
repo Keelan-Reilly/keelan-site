@@ -1,8 +1,10 @@
 <!doctype html>
 <html lang="en">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
-    <meta charset="UTF-8" />
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>
   FPGA Market Data Parser (Low-Latency Pipeline) — Keelan Reilly
 </title>
@@ -10,42 +12,65 @@
 
 <link rel="stylesheet" href="/css/main.min.css">
 
-
-  </head>
+</head>
   <body>
-    <div class="wrap">
-      
-      <main>
+    <div class="site">
+      <nav class="site-nav">
+        <div class="container">
+          <div class="nav-inner">
+            <a class="nav-brand" href="/">Keelan Reilly</a>
+            <div class="nav-links">
+              <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
+              <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <main class="site-main">
         
-  <article class="single">
-    <h2 class="sectionTitle">FPGA Market Data Parser (Low-Latency Pipeline)</h2>
+<div class="container">
+  <div class="article-wrap">
+
+    <a class="back-link" href="/">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+      All projects
+    </a>
+
+    <h1 class="article-title">FPGA Market Data Parser (Low-Latency Pipeline)</h1>
+
+    
+      <p class="article-summary">This project implements a low-latency market data ingestion pipeline in SystemVerilog. I built it to understand how protocol handling, backpressure, and control timing shape end-to-end latency in real hardware pipelines.</p>
     
 
     
-      <div class="kpis kpisWide">
+      <div class="kpi-grid">
         
-          <div class="kpi">
-            <div class="kpiLabel">End-to-end latency (ingress → decision)</div>
-            <div class="kpiValue">~38 cycles</div>
-            <div class="kpiNote">≈ 152 ns @ 250 MHz (simulation)</div>
+          <div class="kpi-box">
+            <div class="kpi-box-label">End-to-end latency (ingress → decision)</div>
+            <div class="kpi-box-value">~38 cycles</div>
+            <div class="kpi-box-note">≈ 152 ns @ 250 MHz (simulation)</div>
           </div>
         
-          <div class="kpi">
-            <div class="kpiLabel">Clock target</div>
-            <div class="kpiValue">250 MHz</div>
-            <div class="kpiNote">Closed with positive slack in Vivado</div>
+          <div class="kpi-box">
+            <div class="kpi-box-label">Clock target</div>
+            <div class="kpi-box-value">250 MHz</div>
+            <div class="kpi-box-note">Closed with positive slack in Vivado</div>
           </div>
         
-          <div class="kpi">
-            <div class="kpiLabel">Verification</div>
-            <div class="kpiValue">Cycle-accurate</div>
-            <div class="kpiNote">Verilator &#43; Python reference models</div>
+          <div class="kpi-box">
+            <div class="kpi-box-label">Verification</div>
+            <div class="kpi-box-value">Cycle-accurate</div>
+            <div class="kpi-box-note">Verilator &#43; Python reference models</div>
           </div>
         
       </div>
     
 
-    <div class="content">
+    <hr class="article-rule" />
+
+    <div class="article-body">
       <h2 id="introduction">Introduction</h2>
 <p>Unlike arithmetic-heavy accelerators, protocol-facing hardware is dominated by control flow, state, and timing constraints. Bytes arrive sequentially, fields are interdependent, and downstream stalls must be handled without losing or duplicating data. Latency is shaped less by computation than by how early decisions can be made and how cleanly backpressure propagates.</p>
 <p>This project explores those constraints by implementing a complete market-data ingestion pipeline on FPGA: Ethernet framing, CRC verification, ITCH message parsing, and a simple decision stage. The focus is not trading strategy, but the mechanics of building a lossless, latency-aware hardware pipeline.</p>
@@ -76,16 +101,30 @@
     </div>
 
     
-      <p class="muted">Source: <a href="https://github.com/Keelan-Reilly/low_latency_market_parser">https://github.com/Keelan-Reilly/low_latency_market_parser</a></p>
+      <a class="repo-link" href="https://github.com/Keelan-Reilly/low_latency_market_parser" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.1.82-.26.82-.58v-2.03c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.13 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.57C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        View source on GitHub
+      </a>
     
-  </article>
+
+  </div>
+</div>
 
       </main>
-      <footer class="siteFooter">
-  <div class="wrap">
-    © 2026 Keelan Reilly
+      <footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <span>© 2026 Keelan Reilly</span>
+      <div class="footer-links">
+        <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </div>
   </div>
 </footer>
+
     </div>
   </body>
 </html>

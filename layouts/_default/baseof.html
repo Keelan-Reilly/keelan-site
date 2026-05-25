@@ -1,14 +1,20 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    {{ partial "head.html" . }}
-  </head>
+  <head>{{ partial "head.html" . }}</head>
   <body>
-    <div class="wrap">
-      {{ if not .IsPage }}
-        {{ partial "header.html" . }}
-      {{ end }}
-      <main>
+    <div class="site">
+      <nav class="site-nav">
+        <div class="container">
+          <div class="nav-inner">
+            <a class="nav-brand" href="{{ "/" | relURL }}">Keelan Reilly</a>
+            <div class="nav-links">
+              <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
+              <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <main class="site-main">
         {{ block "main" . }}{{ end }}
       </main>
       {{ partial "footer.html" . }}

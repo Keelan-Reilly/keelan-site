@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>
+  Formula Student BMS — 75-Cell Hardware and Firmware Stack — Keelan Reilly
+</title>
+
+
+<link rel="stylesheet" href="/css/main.min.css">
+
+</head>
+  <body>
+    <div class="site">
+      <nav class="site-nav">
+        <div class="container">
+          <div class="nav-inner">
+            <a class="nav-brand" href="/">Keelan Reilly</a>
+            <div class="nav-links">
+              <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
+              <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <main class="site-main">
+        
+<div class="container">
+  <div class="article-wrap">
+
+    <a class="back-link" href="/">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+      All projects
+    </a>
+
+    <h1 class="article-title">Formula Student BMS — 75-Cell Hardware and Firmware Stack</h1>
+
+    
+      <p class="article-summary">A hardware-led Formula Student BMS project covering STM32 master-board design, LTC6812 cell-monitoring hardware, dual isoSPI chains, pack measurement, safety permission logic, embedded firmware, desktop tooling, and pre-hardware validation.</p>
+    
+
+    
+
+    <hr class="article-rule" />
+
+    <div class="article-body">
+      <p>This project is a 75-cell Formula Student battery management system spanning custom hardware, embedded firmware, diagnostics, desktop tooling, and bring-up planning.</p>
+<p>The system is built around an STM32F303 master board and LTC6812-based measurement boards. It handles cell-voltage acquisition, temperature measurement, passive balancing, pack-voltage and current sensing, isolated isoSPI communication, power-latch behaviour, CAN/USB interfaces, fault handling, and safety permission outputs.</p>
+<p>The hardware began from an ENNOID-style reference architecture, but the final system required substantial redesign and remapping. The firmware was rewritten around the actual hardware contract rather than carried over from the original codebase.</p>
+<h2 id="system-overview">System overview</h2>
+<p>The BMS monitors a 75-cell lithium-ion accumulator using LTC6812 analogue front-end ICs connected over isolated isoSPI links to an STM32F303 master controller.</p>
+<p>The architecture uses separate measurement paths for cell voltages and temperature sensing. The master board selects between the measurement chains, reads pack-level signals, controls safety-related outputs, and communicates with external tools through USB/UART and CAN.</p>
+<p>At a high level, the system includes:</p>
+<ul>
+<li>STM32F303 master board</li>
+<li>LTC6812-based cell-monitoring boards</li>
+<li>separate temperature measurement chain</li>
+<li>LTC6820-based isoSPI interfaces</li>
+<li>pack-voltage and current measurement</li>
+<li>charger-detect and power-latch circuitry</li>
+<li>active-low permission outputs into the shutdown circuit</li>
+<li>embedded C firmware</li>
+<li>binary UART protocol</li>
+<li>desktop monitoring and configuration tool</li>
+<li>simulator/fake target for pre-hardware validation</li>
+</ul>
+<p>The main design focus was keeping the electrical design, firmware semantics, and bring-up workflow consistent. Signals such as pack voltage, load-side voltage, shutdown permission, balancing control, and temperature-chain enables have specific hardware meanings, so the firmware was structured around those meanings directly.</p>
+<h2 id="master-board-hardware">Master board hardware</h2>
+<p><img src="/figures/bms/master_board_render.png" alt="BMS master board render">
+<em>STM32 master board for isoSPI communication, pack measurement, power latch, CAN/USB, and permission outputs.</em></p>
+<p>The master board is the central control and interface board for the BMS. It contains the STM32F303 controller, isoSPI bridge circuitry, local measurement interfaces, power-latch logic, USB/CAN communication, and outputs into the vehicle safety system.</p>
+<p>The STM32 controls two isoSPI interfaces over a shared SPI bus with independent chip selects. This allows the firmware to address the cell-measurement and temperature-measurement chains separately while keeping the physical interface compact.</p>
+<p>The board also measures pack-level signals used for system state and precharge validation. Battery-side voltage, load-side voltage, current, and charger presence are treated as separate hardware signals rather than collapsed into a single generic pack measurement. This distinction is important during contactor and precharge transitions, where different nodes in the accumulator can sit at different potentials.</p>
+<p>The master board also includes wake and hold circuitry. External wake sources can bring the board up, after which firmware can assert a power-hold signal to keep the system alive. During shutdown, firmware releases the latch after placing safety-relevant outputs into their safe state.</p>
+<h2 id="isospi-communication">isoSPI communication</h2>
+<p>Communication between the master controller and the floating measurement boards uses isoSPI. LTC6820 bridge circuits convert the STM32 SPI interface into transformer-coupled isoSPI links suitable for communication across the accumulator measurement chain.</p>
+<p>The cell and temperature chains use separate chip selects, so the firmware has to enforce correct chain selection and prevent ambiguous transactions. Communication failures are treated as system-level events rather than ignored driver errors.</p>
+<p>Every LTC6812 read is checked using packet error code validation. If a read fails validation, the data is rejected. This is important because corrupted measurements can look plausible, especially in a large cell stack.</p>
+<p>The isoSPI design was treated as both an electrical and firmware problem: biasing, termination, wake behaviour, chip-select handling, and PEC validation all affect whether the system can trust the resulting measurement data.</p>
+<h2 id="cell-monitoring-boards">Cell-monitoring boards</h2>
+<p><img src="/figures/bms/slave_board_render.png" alt="LTC6812 slave board render">
+<em>LTC6812-based measurement board for cell sensing, filtering, protection, passive balancing, and isoSPI daisy-chain communication.</em></p>
+<p>The cell-monitoring boards use LTC6812 analogue front-end ICs to measure cell voltages across the accumulator. Each device monitors a group of series cells and communicates back to the master through the isoSPI chain.</p>
+<p>The hardware around the LTC6812 includes cell-tap routing, input filtering, protection components, passive balancing paths, and the required local support circuitry for the floating measurement domain.</p>
+<p>The cell taps are safety-relevant connections, so the board design had to account for protection, routing density, creepage and clearance, connector access, manufacturability, and accumulator packaging constraints. Full schematics and layout details are intentionally omitted here, but the design work included the practical tradeoffs around fitting a high-channel-count measurement system into a Formula Student accumulator.</p>
+<p>Passive balancing is implemented through resistive discharge paths controlled by the LTC6812. The firmware decides when balancing is allowed, while the hardware defines the electrical and thermal limits of the balancing path.</p>
+<h2 id="temperature-measurement">Temperature measurement</h2>
+<p>Temperature sensing is implemented using a separate LTC6812-based measurement chain. This keeps temperature acquisition independent from the main cell-voltage chain and allows the firmware to handle sensor excitation, settling, conversion, and shutdown explicitly.</p>
+<p>The temperature chain uses the LTC6812 measurement inputs to read sensor voltages. The associated switch outputs are used for sensor-bias control rather than cell balancing. The firmware therefore treats the temperature chain as a separate hardware role with its own allowed operations.</p>
+<p>This separation is one of the places where the hardware redesign drove the firmware rewrite. Reusing the old firmware model would have made it too easy to apply the wrong meaning to the same class of pins.</p>
+<h2 id="pack-measurement-and-precharge-signals">Pack measurement and precharge signals</h2>
+<p>The master board measures battery-side voltage, load-side voltage, current, and charger presence through dedicated signal paths. These signals are used for state estimation, protection decisions, charger behaviour, and precharge validation.</p>
+<p>Precharge depends on comparing the battery-side and load-side voltages under the correct conditions. The firmware therefore tracks these as distinct measurements with their own validity and freshness requirements.</p>
+<p>The analogue signal chains include isolation, scaling, filtering, and conversion stages. The firmware calibration path has to account for the complete measurement chain rather than only the high-voltage divider ratio.</p>
+<h2 id="permission-outputs-and-shutdown-interface">Permission outputs and shutdown interface</h2>
+<p>The BMS drives permission outputs into the vehicle safety and shutdown circuitry. These outputs are handled as safety permissions rather than direct actuator commands.</p>
+<p>The hardware interface uses defined reset/default behaviour so that the system starts in a safe output state. Firmware must explicitly assert permissions only after the relevant measurements, diagnostics, and state-machine conditions are satisfied.</p>
+<p>A major part of the hardware/firmware integration was ensuring that output names, polarities, and downstream meanings were correctly represented in code. Some inherited signal names no longer matched their new electrical function, so the firmware abstractions were rewritten to match the board rather than preserve legacy terminology.</p>
+<p>Safety-critical GPIO writes are centralised in the firmware. Other modules can request permission states, but the actual output writes pass through one controlled path.</p>
+<h2 id="firmware-architecture">Firmware architecture</h2>
+<p>The firmware was rewritten in embedded C for the STM32F303 around the revised hardware design.</p>
+<p>It covers:</p>
+<ul>
+<li>board support and peripheral setup</li>
+<li>dual-chain isoSPI communication</li>
+<li>LTC6812 cell-voltage acquisition</li>
+<li>temperature-chain acquisition</li>
+<li>pack-voltage and current measurement</li>
+<li>charger-detect and power-latch handling</li>
+<li>open-wire diagnostics</li>
+<li>passive balancing control</li>
+<li>fault evaluation</li>
+<li>permission gating</li>
+<li>state-machine logic</li>
+<li>UART protocol handling</li>
+<li>desktop-tool integration</li>
+</ul>
+<p>The firmware uses the hardware design as the source of truth. The cell chain, temperature chain, pack measurement paths, shutdown permissions, and power-latch behaviour are represented explicitly rather than hidden behind inherited abstractions.</p>
+<p>Measurement data carries validity state. Communication errors, stale readings, failed diagnostics, and configuration problems are treated as conditions that affect whether the system can safely enable outputs.</p>
+<p>The fault system tracks cell-voltage limits, temperature limits, measurement validity, communication failures, open-wire diagnostics, pack-measurement issues, precharge timeout, and internal fatal states. Faults are tracked in active and latched form so the system can distinguish current conditions from events that occurred earlier in a session.</p>
+<h2 id="balancing-and-diagnostics">Balancing and diagnostics</h2>
+<p>Balancing is passive and controlled by firmware through the LTC6812 cell chain. The balancing logic depends on valid cell measurements and is inhibited when diagnostic state is uncertain.</p>
+<p>Open-wire diagnostics are included because missing or unreliable sense connections can make cell readings misleading. The firmware treats diagnostic status as part of the measurement validity model rather than as a separate debug feature.</p>
+<p>Temperature-chain switching is handled separately from balancing. Sensor-bias outputs are enabled only when needed for measurement and disabled afterwards. This reduces unnecessary loading and keeps the temperature-chain behaviour distinct from the balancing path.</p>
+<h2 id="desktop-tool-and-simulator">Desktop tool and simulator</h2>
+<p>A desktop monitoring tool was developed alongside the firmware. It communicates with the BMS over a binary UART protocol and supports live telemetry, cell and temperature views, fault monitoring, configuration, diagnostics, and bring-up workflows.</p>
+<p>A simulator/fake target implements the same protocol as the firmware. It can produce normal telemetry, fault cases, configuration errors, diagnostic states, and changing live data. This allowed the desktop tool and protocol stack to be exercised before the hardware was available.</p>
+<p>The simulator is part of the bring-up strategy. It lets the software and UI paths be validated before first power-on, so physical board testing can focus on electrical behaviour, measurement calibration, isoSPI reliability, and integration with the accumulator.</p>
+<h2 id="validation-and-bring-up-planning">Validation and bring-up planning</h2>
+<p>The project includes pre-hardware validation for the firmware logic, protocol stack, and desktop tool. Unit and integration tests cover communication framing, measurement parsing, configuration handling, fault logic, balancing decisions, and simulator interoperability.</p>
+<p>Bring-up documentation covers first-flash steps, bench checks, UART smoke tests, chain communication checks, measurement validation, fault injection, and safety-output verification.</p>
+<p>Hardware validation is still the next major phase. The remaining work includes real isoSPI timing validation, LTC6812 wake and communication behaviour, analogue measurement calibration, balancing thermal checks, precharge behaviour under real conditions, and verification of the shutdown-interface polarity on the physical vehicle system.</p>
+<h2 id="current-status">Current status</h2>
+<p>The hardware design and firmware architecture are prepared for bring-up. The firmware builds, the protocol stack is implemented, and the desktop tool works against the simulator/fake target.</p>
+<p>The system still requires full validation on manufactured hardware and in the accumulator environment. The main unknowns are electrical and integration-related: board parasitics, isoSPI margins, measurement calibration, contactor/precharge behaviour, thermal behaviour during balancing, and final safety review.</p>
+<p>The pre-hardware work was intended to reduce integration risk before first power-on by making the firmware, protocol, UI, diagnostics, and bring-up procedures coherent ahead of the physical board tests.</p>
+<h2 id="technical-highlights">Technical highlights</h2>
+<ul>
+<li>STM32F303 master board for Formula Student BMS control</li>
+<li>75-cell LTC6812-based measurement architecture</li>
+<li>dual isoSPI measurement chains with separate chip selects</li>
+<li>LTC6820-based isolated communication links</li>
+<li>cell-monitoring boards with filtering, protection, and passive balancing</li>
+<li>separate LTC6812-based temperature measurement chain</li>
+<li>pack-side voltage, load-side voltage, current, and charger-detect measurement paths</li>
+<li>firmware-controlled power-latch behaviour</li>
+<li>active-low safety permission outputs into the shutdown circuit</li>
+<li>firmware rewrite around the revised hardware contract</li>
+<li>PEC-validated LTC6812 communication</li>
+<li>open-wire diagnostics and stale-measurement invalidation</li>
+<li>centralised safety-critical GPIO control</li>
+<li>binary UART protocol for telemetry, configuration, and diagnostics</li>
+<li>desktop monitoring tool for development and bring-up</li>
+<li>simulator/fake target for pre-hardware validation</li>
+<li>structured first-flash and bench validation procedure</li>
+</ul>
+<h2 id="what-this-establishes">What this establishes</h2>
+<p>This project demonstrates full-stack electrical system design across PCB hardware, analogue measurement, isolation, embedded firmware, diagnostics, tooling, and bring-up planning.</p>
+<p>The hardware defines the real constraints: floating cell domains, isolated communication, high-channel-count sensing, pack measurement, shutdown permissions, power sequencing, and accumulator packaging. The firmware and desktop tooling were built around those constraints so the system could be tested, operated, and brought up methodically.</p>
+
+    </div>
+
+    
+
+  </div>
+</div>
+
+      </main>
+      <footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <span>© 2026 Keelan Reilly</span>
+      <div class="footer-links">
+        <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+    </div>
+  </body>
+</html>
