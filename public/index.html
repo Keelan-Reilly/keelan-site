@@ -32,12 +32,13 @@
 <div class="container">
 
   <section class="hero">
-    <p class="hero-field">Electronic Engineering · FPGA · RTL Design</p>
+    <p class="hero-field">Electronic Engineering · FPGA · Embedded Systems · PCB Design</p>
     <h1 class="hero-name">Keelan Reilly</h1>
     <p class="hero-desc">
-      Building FPGA-based hardware systems and accelerator architectures.
-      Work focuses on measured RTL design, implementation, and performance
-      tradeoffs under real toolflows.
+      Building hardware systems from RTL accelerators to embedded firmware
+      and custom PCBs. Work spans FPGA implementation, mixed-signal board
+      design, embedded C on STM32, and the verification and tooling that
+      connects them.
     </p>
     <div class="hero-cta">
       <a class="cta-btn" href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">
@@ -72,6 +73,25 @@
           
 
           
+            <div class="project-chips">
+              
+                <span class="chip" title="Accumulator size">
+                  <strong>75 cells</strong>
+                  <span class="chip-note">LTC6812 cell-monitoring ICs</span>
+                </span>
+              
+                <span class="chip" title="isoSPI chains">
+                  <strong>Dual</strong>
+                  <span class="chip-note">Cell &#43; temperature, separate chip selects</span>
+                </span>
+              
+                <span class="chip" title="Pre-hardware validation">
+                  <strong>Simulator target</strong>
+                  <span class="chip-note">Full protocol &#43; UI exercised before first power-on</span>
+                </span>
+              
+            </div>
+          
         </article>
       
         <article class="project-row">
@@ -86,6 +106,25 @@
             <p class="project-summary">A measured comparison of FPGA MAC array variants showing that compute sharing is only worth its fixed cost under genuine resource pressure.</p>
           
 
+          
+            <div class="project-chips">
+              
+                <span class="chip" title="Baseline latency">
+                  <strong>33 cycles</strong>
+                  <span class="chip-note">Dedicated MAC array</span>
+                </span>
+              
+                <span class="chip" title="Shared-variant latency">
+                  <strong>65 cycles</strong>
+                  <span class="chip-note">Fixed ~2× penalty for both shared designs</span>
+                </span>
+              
+                <span class="chip" title="DSP eliminated">
+                  <strong>100%</strong>
+                  <span class="chip-note">DSP-eliminating variant, no change to scheduling</span>
+                </span>
+              
+            </div>
           
         </article>
       

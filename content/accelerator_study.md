@@ -2,6 +2,16 @@
 title: "Compute Sharing in FPGA MAC Arrays Isn't a Smooth Tradeoff"
 date: 2026-03-26
 summary: A measured comparison of FPGA MAC array variants showing that compute sharing is only worth its fixed cost under genuine resource pressure.
+kpis:
+  - label: "Baseline latency"
+    value: "33 cycles"
+    note: "Dedicated MAC array"
+  - label: "Shared-variant latency"
+    value: "65 cycles"
+    note: "Fixed ~2× penalty for both shared designs"
+  - label: "DSP eliminated"
+    value: "100%"
+    note: "DSP-eliminating variant, no change to scheduling"
 ---
 
 Time-multiplexing a compute unit in FPGA design is often described as a simple area-throughput tradeoff: it saves resources, but reduces performance. That is broadly true, but it is too coarse to be useful in practice. The relevant question is not whether sharing helps area or hurts throughput, but under what conditions the tradeoff is actually worth accepting.

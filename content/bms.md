@@ -2,6 +2,16 @@
 title: "Formula Student BMS — 75-Cell Hardware and Firmware Stack"
 date: 2026-05-25
 summary: "A hardware-led Formula Student BMS project covering STM32 master-board design, LTC6812 cell-monitoring hardware, dual isoSPI chains, pack measurement, safety permission logic, embedded firmware, desktop tooling, and pre-hardware validation."
+kpis:
+  - label: "Accumulator size"
+    value: "75 cells"
+    note: "LTC6812 cell-monitoring ICs"
+  - label: "isoSPI chains"
+    value: "Dual"
+    note: "Cell + temperature, separate chip selects"
+  - label: "Pre-hardware validation"
+    value: "Simulator target"
+    note: "Full protocol + UI exercised before first power-on"
 ---
 
 This project is a 75-cell Formula Student battery management system spanning custom hardware, embedded firmware, diagnostics, desktop tooling, and bring-up planning.
