@@ -18,7 +18,7 @@ Time-multiplexing a compute unit in FPGA design is often described as a simple a
 
 To make that question concrete, I implemented three MAC-array variants, ran each through synthesis and place-and-route on the Basys 3, and compared the resulting resource and performance behaviour.
 
-For this design family, compute sharing is not a smooth optimisation knob. It behaves more like a fixed performance cost that only becomes worth paying when it relieves the resource that is actually limiting the design.
+For this design family, compute sharing is not a gradual trade-off. It behaves more like a fixed performance cost that only becomes worth paying when it relieves the resource that is actually limiting the design.
 
 ## The setup
 
@@ -77,9 +77,6 @@ Sharing only makes sense when it relieves the resource that is actually limiting
 | LUT budget is genuinely tight, while DSP budget is still comfortable | LUT-saving variant |
 
 On the XC7A35T, this usually reduces to two practical choices: the baseline when throughput matters and DSP usage is acceptable, or the DSP-eliminating variant when DSP slices must be reserved for other parts of the design. The LUT-saving variant is less compelling on this device because it reduces a resource that is not under much pressure.
-
-![Figure 5 — decision surface](/figures/final_decision_surface_figures/supported_choice_regions.png)
-*Figure 5. Decision regions over LUT and DSP budget space. On the XC7A35T, DSP pressure appears before LUT pressure across the measured design range.*
 
 ## A note on timing
 

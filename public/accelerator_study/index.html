@@ -73,7 +73,7 @@
     <div class="article-body">
       <p>Time-multiplexing a compute unit in FPGA design is often described as a simple area-throughput tradeoff: it saves resources, but reduces performance. That is broadly true, but it is too coarse to be useful in practice. The relevant question is not whether sharing helps area or hurts throughput, but under what conditions the tradeoff is actually worth accepting.</p>
 <p>To make that question concrete, I implemented three MAC-array variants, ran each through synthesis and place-and-route on the Basys 3, and compared the resulting resource and performance behaviour.</p>
-<p>For this design family, compute sharing is not a smooth optimisation knob. It behaves more like a fixed performance cost that only becomes worth paying when it relieves the resource that is actually limiting the design.</p>
+<p>For this design family, compute sharing is not a gradual trade-off. It behaves more like a fixed performance cost that only becomes worth paying when it relieves the resource that is actually limiting the design.</p>
 <h2 id="the-setup">The setup</h2>
 <p>The design family contains three variants. The <strong>baseline</strong> assigns dedicated hardware to each MAC unit, with no sharing. The <strong>LUT-saving</strong> variant time-multiplexes the compute while keeping DSP usage unchanged, reducing LUT consumption. The <strong>DSP-eliminating</strong> variant also time-multiplexes the compute, but removes DSP usage entirely.</p>
 <p>All three were measured at array sizes of 16, 32, and 64 MAC units, with a fixed accumulation depth of 32. The conclusions in this post apply to those configurations only.</p>
@@ -155,8 +155,6 @@
   </tbody>
 </table>
 <p>On the XC7A35T, this usually reduces to two practical choices: the baseline when throughput matters and DSP usage is acceptable, or the DSP-eliminating variant when DSP slices must be reserved for other parts of the design. The LUT-saving variant is less compelling on this device because it reduces a resource that is not under much pressure.</p>
-<p><img src="/figures/final_decision_surface_figures/supported_choice_regions.png" alt="Figure 5 — decision surface">
-<em>Figure 5. Decision regions over LUT and DSP budget space. On the XC7A35T, DSP pressure appears before LUT pressure across the measured design range.</em></p>
 <h2 id="a-note-on-timing">A note on timing</h2>
 <p>Worst-case slack varies across implementations and array sizes, and I do not think the current data supports a clean timing-based switching rule. On this part, timing behaviour should be checked with a fresh implementation run rather than inferred from another design point.</p>
 <h2 id="the-takeaway">The takeaway</h2>
