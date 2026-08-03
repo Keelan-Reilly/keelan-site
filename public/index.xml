@@ -13,7 +13,7 @@
       <link>/bms/</link>
       <pubDate>Mon, 25 May 2026 00:00:00 +0000</pubDate>
       <guid>/bms/</guid>
-      <description>A hardware-led Formula Student BMS project covering STM32 master-board design, LTC6812 cell-monitoring hardware, dual isoSPI chains, pack measurement, safety permission logic, embedded firmware, desktop tooling, and pre-hardware validation.</description>
+      <description>A hardware-led Formula Student BMS project covering STM32 master-board design, LTC6812 cell-monitoring hardware, dual isoSPI chains, pack measurement, safety permission logic, embedded firmware, desktop tooling, and full-system validation.</description>
     </item>
     <item>
       <title>Compute Sharing in FPGA MAC Arrays Isn&#39;t a Smooth Tradeoff</title>

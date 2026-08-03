@@ -1,7 +1,7 @@
 ---
 title: "Formula Student BMS — 75-Cell Hardware and Firmware Stack"
 date: 2026-05-25
-summary: "A hardware-led Formula Student BMS project covering STM32 master-board design, LTC6812 cell-monitoring hardware, dual isoSPI chains, pack measurement, safety permission logic, embedded firmware, desktop tooling, and pre-hardware validation."
+summary: "A hardware-led Formula Student BMS project covering STM32 master-board design, LTC6812 cell-monitoring hardware, dual isoSPI chains, pack measurement, safety permission logic, embedded firmware, desktop tooling, and full-system validation."
 kpis:
   - label: "Accumulator size"
     value: "75 cells"
@@ -9,12 +9,12 @@ kpis:
   - label: "isoSPI chains"
     value: "Dual"
     note: "Cell + temperature, separate chip selects"
-  - label: "Pre-hardware validation"
-    value: "Simulator target"
-    note: "Full protocol + UI exercised before first power-on"
+  - label: "System validation"
+    value: "Complete"
+    note: "Hardware, firmware, protocol, and UI validated"
 ---
 
-This project is a 75-cell Formula Student battery management system spanning custom hardware, embedded firmware, diagnostics, desktop tooling, and bring-up planning.
+This project is a fully validated 75-cell Formula Student battery management system spanning custom hardware, embedded firmware, diagnostics, desktop tooling, and accumulator integration.
 
 The system is built around an STM32 master board and LTC6812-based measurement boards. It handles cell-voltage acquisition, temperature measurement, passive balancing, pack-voltage and current sensing, isolated isoSPI communication, power-latch behaviour, CAN/USB interfaces, fault handling, and safety permission outputs.
 
@@ -38,9 +38,9 @@ At a high level, the system includes:
 - embedded C firmware
 - binary UART protocol
 - desktop monitoring and configuration tool
-- simulator/fake target for pre-hardware validation
+- simulator/fake target for software testing and fault injection
 
-The main design focus was keeping the electrical design, firmware semantics, and bring-up workflow consistent. Signals such as pack voltage, load-side voltage, shutdown permission, balancing control, and temperature-chain enables have specific hardware meanings, so the firmware was structured around those meanings directly.
+The main design focus was keeping the electrical design, firmware semantics, and validation workflow consistent. Signals such as pack voltage, load-side voltage, shutdown permission, balancing control, and temperature-chain enables have specific hardware meanings, so the firmware was structured around those meanings directly.
 
 ## Master board hardware
 
@@ -142,25 +142,23 @@ Temperature-chain switching is handled separately from balancing. Sensor-bias ou
 
 A desktop monitoring tool was developed alongside the firmware. It communicates with the BMS over a binary UART protocol and supports live telemetry, cell and temperature views, fault monitoring, configuration, diagnostics, and bring-up workflows.
 
-A simulator/fake target implements the same protocol as the firmware. It can produce normal telemetry, fault cases, configuration errors, diagnostic states, and changing live data. This allowed the desktop tool and protocol stack to be exercised before the hardware was available.
+A simulator/fake target implements the same protocol as the firmware. It can produce normal telemetry, fault cases, configuration errors, diagnostic states, and changing live data. This allowed the desktop tool and protocol stack to be exercised independently of the physical BMS.
 
-The simulator is part of the bring-up strategy. It lets the software and UI paths be validated before first power-on, so physical board testing can focus on electrical behaviour, measurement calibration, isoSPI reliability, and integration with the accumulator.
+The simulator remains useful for repeatable software testing and fault injection alongside the validated physical system.
 
-## Validation and bring-up planning
+## Validation and bring-up
 
-The project includes pre-hardware validation for the firmware logic, protocol stack, and desktop tool. Unit and integration tests cover communication framing, measurement parsing, configuration handling, fault logic, balancing decisions, and simulator interoperability.
+Validation covered the firmware logic, protocol stack, desktop tool, manufactured hardware, and accumulator integration. Unit and integration tests cover communication framing, measurement parsing, configuration handling, fault logic, balancing decisions, and simulator interoperability.
 
 Bring-up documentation covers first-flash steps, bench checks, UART smoke tests, chain communication checks, measurement validation, fault injection, and safety-output verification.
 
-Hardware validation is still the next major phase. The remaining work includes real isoSPI timing validation, LTC6812 wake and communication behaviour, analogue measurement calibration, balancing thermal checks, precharge behaviour under real conditions, and verification of the shutdown-interface polarity on the physical vehicle system.
+Physical validation confirmed isoSPI timing, LTC6812 wake and communication behaviour, analogue measurement calibration, balancing behaviour, precharge operation, and the shutdown interface. The completed BMS operates correctly as an integrated hardware and software system.
 
 ## Current status
 
-The hardware design and firmware architecture are prepared for bring-up. The firmware builds, the protocol stack is implemented, and the desktop tool works against the simulator/fake target.
+The BMS is fully validated and operational. The manufactured hardware, embedded firmware, protocol stack, desktop tool, measurement chains, diagnostics, balancing, precharge logic, and safety interfaces work together as designed.
 
-The system still requires full validation on manufactured hardware and in the accumulator environment. The main unknowns are electrical and integration-related: board parasitics, isoSPI margins, measurement calibration, contactor/precharge behaviour, thermal behaviour during balancing, and final safety review.
-
-The pre-hardware work was intended to reduce integration risk before first power-on by making the firmware, protocol, UI, diagnostics, and bring-up procedures coherent ahead of the physical board tests.
+The simulator-led software work reduced integration risk before first power-on, while bench and accumulator testing completed the physical validation of the system.
 
 ## Technical highlights
 
@@ -179,11 +177,11 @@ The pre-hardware work was intended to reduce integration risk before first power
 - centralised safety-critical GPIO control
 - binary UART protocol for telemetry, configuration, and diagnostics
 - desktop monitoring tool for development and bring-up
-- simulator/fake target for pre-hardware validation
-- structured first-flash and bench validation procedure
+- simulator/fake target for repeatable testing and fault injection
+- completed bench and accumulator validation
 
 ## What this establishes
 
-This project demonstrates full-stack electrical system design across PCB hardware, analogue measurement, isolation, embedded firmware, diagnostics, tooling, and bring-up planning.
+This project demonstrates full-stack electrical system design across PCB hardware, analogue measurement, isolation, embedded firmware, diagnostics, tooling, and completed system validation.
 
-The hardware defines the real constraints: floating cell domains, isolated communication, high-channel-count sensing, pack measurement, shutdown permissions, power sequencing, and accumulator packaging. The firmware and desktop tooling were built around those constraints so the system could be tested, operated, and brought up methodically.
+The hardware defines the real constraints: floating cell domains, isolated communication, high-channel-count sensing, pack measurement, shutdown permissions, power sequencing, and accumulator packaging. The firmware and desktop tooling were built around those constraints, then validated with the manufactured system in its accumulator environment.
