@@ -14,13 +14,6 @@
           {{ with .Params.summary }}
             <p class="project-summary">{{ . }}</p>
           {{ end }}
-          {{ with .Params.kpis }}
-            <div class="project-chips">
-              {{ range . }}
-                <span class="chip"><strong>{{ .value }}</strong> · {{ .label }}</span>
-              {{ end }}
-            </div>
-          {{ end }}
         </article>
       {{ end }}
     </div>
