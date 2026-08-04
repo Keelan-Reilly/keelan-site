@@ -6,6 +6,35 @@
 <title>
   {{ if .IsHome }}Keelan Reilly{{ else }}{{ .Title }} — Keelan Reilly{{ end }}
 </title>
+{{ with (.Params.summary | default .Params.description) }}
+<meta name="description" content="{{ . }}" />
+<meta property="og:description" content="{{ . }}" />
+{{ end }}
+<meta property="og:title" content="{{ if .IsHome }}Keelan Reilly{{ else }}{{ .Title }} — Keelan Reilly{{ end }}" />
+<meta property="og:type" content="{{ if .IsHome }}profile{{ else if .IsPage }}article{{ else }}website{{ end }}" />
+{{ if .IsHome }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Keelan Reilly",
+  "jobTitle": "Electronic Engineer",
+  "description": "Electronic engineer working across digital hardware, embedded software, electronics, Linux and system architecture.",
+  "sameAs": [
+    "https://github.com/Keelan-Reilly",
+    "https://www.linkedin.com/in/keelan-reilly-b22b5a296"
+  ],
+  "knowsAbout": [
+    "Electronic system architecture",
+    "FPGA and RTL design",
+    "Embedded systems",
+    "PCB design",
+    "Hardware-software co-design",
+    "System verification"
+  ]
+}
+</script>
+{{ end }}
 
 {{ $css := resources.Get "css/main.css" | minify }}
 <link rel="stylesheet" href="{{ $css.RelPermalink }}">
