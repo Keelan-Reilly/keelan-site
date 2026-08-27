@@ -2,7 +2,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&amp;family=Manrope:wght@400;500;600;700&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&amp;display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var saved = localStorage.getItem('theme');
+    var preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = saved || preferred;
+  })();
+</script>
 <title>
   {{ if .IsHome }}Keelan Reilly{{ else }}{{ .Title }} — Keelan Reilly{{ end }}
 </title>
@@ -18,19 +25,20 @@
   "@context": "https://schema.org",
   "@type": "Person",
   "name": "Keelan Reilly",
-  "jobTitle": "Electronic Engineer",
-  "description": "Electronic engineer working across digital hardware, embedded software, electronics, Linux and system architecture.",
+  "jobTitle": "Electronic Engineer — AI Inference Performance",
+  "description": "Keelan Reilly is an electronic engineer focused on AI inference performance, ML systems, computer architecture, and hardware–software co-design.",
   "sameAs": [
     "https://github.com/Keelan-Reilly",
     "https://www.linkedin.com/in/keelan-reilly-b22b5a296"
   ],
   "knowsAbout": [
-    "Electronic system architecture",
-    "FPGA and RTL design",
-    "Embedded systems",
-    "PCB design",
+    "AI inference systems",
+    "ML systems",
+    "Performance engineering",
+    "GPU computing",
+    "Computer architecture",
     "Hardware-software co-design",
-    "System verification"
+    "Embedded and real-time systems"
   ]
 }
 </script>

@@ -1,17 +1,24 @@
 <!doctype html>
 <html lang="en">
   <head>
-	<meta name="generator" content="Hugo 0.153.0"><meta charset="UTF-8" />
+	<meta name="generator" content="Hugo 0.153.0"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&amp;family=Manrope:wght@400;500;600;700&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&amp;display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var saved = localStorage.getItem('theme');
+    var preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = saved || preferred;
+  })();
+</script>
 <title>
   Keelan Reilly
 </title>
 
-<meta name="description" content="Keelan Reilly is an electronic engineer working across digital hardware, embedded software, electronics, Linux and system architecture." />
-<meta property="og:description" content="Keelan Reilly is an electronic engineer working across digital hardware, embedded software, electronics, Linux and system architecture." />
+<meta name="description" content="Keelan Reilly is an electronic engineer focused on AI inference performance, ML systems, computer architecture, and hardware–software co-design." />
+<meta property="og:description" content="Keelan Reilly is an electronic engineer focused on AI inference performance, ML systems, computer architecture, and hardware–software co-design." />
 
 <meta property="og:title" content="Keelan Reilly" />
 <meta property="og:type" content="profile" />
@@ -21,19 +28,20 @@
   "@context": "https://schema.org",
   "@type": "Person",
   "name": "Keelan Reilly",
-  "jobTitle": "Electronic Engineer",
-  "description": "Electronic engineer working across digital hardware, embedded software, electronics, Linux and system architecture.",
+  "jobTitle": "Electronic Engineer — AI Inference Performance",
+  "description": "Keelan Reilly is an electronic engineer focused on AI inference performance, ML systems, computer architecture, and hardware–software co-design.",
   "sameAs": [
     "https://github.com/Keelan-Reilly",
     "https://www.linkedin.com/in/keelan-reilly-b22b5a296"
   ],
   "knowsAbout": [
-    "Electronic system architecture",
-    "FPGA and RTL design",
-    "Embedded systems",
-    "PCB design",
+    "AI inference systems",
+    "ML systems",
+    "Performance engineering",
+    "GPU computing",
+    "Computer architecture",
     "Hardware-software co-design",
-    "System verification"
+    "Embedded and real-time systems"
   ]
 }
 </script>
@@ -53,6 +61,10 @@
             <div class="nav-links">
               <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
               <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
+              <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch colour theme">
+                <span class="theme-toggle-icon" aria-hidden="true"></span>
+                <span class="theme-toggle-label">Theme</span>
+              </button>
             </div>
           </div>
         </div>
@@ -64,10 +76,10 @@
   <section class="hero">
     <div class="hero-copy">
       <h1 class="hero-name">Keelan Reilly</h1>
-      <p class="hero-statement">I build complete hardware systems.</p>
+      <p class="hero-statement">AI inference performance.</p>
 
       <div class="hero-desc">
-        <p>I was born and raised in Dublin. I’m an electronic engineer working across digital hardware, embedded software, electronics, Linux, and system architecture. I’m also a classical flautist and pianist, and a former principal player with the National Youth Orchestra of Ireland.</p>
+        <p>I’m an electronic engineer from Dublin with a background in digital hardware, embedded software, and electronics. I’m also a classical flautist and pianist, and a former principal player with the National Youth Orchestra of Ireland.</p>
       </div>
     </div>
 
@@ -82,50 +94,79 @@
     </figure>
 
     <div class="hero-details">
-      <p>At ASML, I built an FPGA–SoC platform for real-time monitoring and calibration of precision-motion hardware, spanning VHDL, memory-mapped IP, Linux drivers, shared-memory graphics, FPGA-driven HDMI, and commissioning tooling.</p>
+      <p>I’m currently working on performance engineering for real-time AI inference, with a particular interest in physical-AI workloads such as VLAs and world models. I’m interested in how modern inference workloads execute on GPUs, where their latency and memory bottlenecks come from, and how those characteristics can be used to evaluate and shape future accelerator architectures.</p>
 
-      <p>In Formula Student, I owned the electrical architecture of a 300 V electric race car: shutdown and precharge systems, high-voltage isolation, low-voltage distribution, safety interlocks, and more than ten custom PCBs. I also designed, programmed, and validated its 75-cell battery-management system.</p>
+      <p>At ASML, I built an FPGA–Linux diagnostic and calibration platform for precision-motion hardware. The FPGA handled real-time data acquisition and deterministic processing, while Linux handled configuration, diagnostics, and live visualisation.</p>
 
-      <p>I work best on problems where the requirements are incomplete and the difficult part is deciding what belongs in hardware or software, identifying failure modes, and making the result reliable and testable.</p>
+      <p>In Formula Student, I owned the electrical architecture of a 300 V electric race car from scratch, designed and brought up more than ten custom PCBs, and built and validated its 75-cell battery-management system.</p>
 
-      <p>My current interests are compute systems, performance engineering, and hardware–software co-design.</p>
     </div>
   </section>
 
   <section class="section work-section" aria-labelledby="work-title">
-    <h2 class="section-label" id="work-title">Selected work</h2>
+    <div class="section-head">
+      <h2 class="section-label" id="work-title">Selected work</h2>
+    </div>
 
     <div class="work-list">
       <article class="work-row">
-        <div class="work-top">
-          <h3 class="work-title"><a href="/bms/">Formula Student — 300 V electrical architecture and BMS</a></h3>
-          <span class="work-year">2024–2026</span>
-        </div>
-        <p class="work-summary">Owned the car’s rule-critical electrical architecture, designed and brought up more than ten custom PCBs, and built the validated 75-cell BMS across hardware, embedded firmware, diagnostics, and desktop tooling.</p>
+        <a class="work-link" href="/bms/">
+          <span class="work-index">01</span>
+          <div class="work-content">
+            <div class="work-top">
+              <h3 class="work-title">Formula Student — 300 V electrical architecture and BMS</h3>
+              <span class="work-year">2024–2026</span>
+            </div>
+            <p class="work-summary">Owned the car’s rule-critical electrical architecture, designed and brought up more than ten custom PCBs, and built the validated 75-cell BMS across hardware, embedded firmware, diagnostics, and desktop tooling.</p>
+            <div class="work-tags"><span>PCB design</span><span>Firmware</span><span>Validation</span></div>
+          </div>
+          <span class="work-arrow" aria-hidden="true">↗</span>
+        </a>
       </article>
 
       <article class="work-row">
-        <div class="work-top">
-          <h3 class="work-title"><a href="/accelerator_study/">Architecture exploration — compute sharing in FPGA MAC arrays</a></h3>
-          <span class="work-year">2026</span>
-        </div>
-        <p class="work-summary">Implemented and placed-and-routed three MAC-array architectures to measure when compute sharing is worth its fixed twofold latency cost—and when it only saves resources the design does not need.</p>
+        <a class="work-link" href="/accelerator_study/">
+          <span class="work-index">02</span>
+          <div class="work-content">
+            <div class="work-top">
+              <h3 class="work-title">Architecture exploration — compute sharing in FPGA MAC arrays</h3>
+              <span class="work-year">2026</span>
+            </div>
+            <p class="work-summary">Implemented and placed-and-routed three MAC-array architectures to measure when compute sharing is worth its fixed twofold latency cost—and when it only saves resources the design does not need.</p>
+            <div class="work-tags"><span>FPGA</span><span>Architecture</span><span>Place &amp; route</span></div>
+          </div>
+          <span class="work-arrow" aria-hidden="true">↗</span>
+        </a>
       </article>
 
       <article class="work-row">
-        <div class="work-top">
-          <h3 class="work-title"><a href="/cnn-accelerator/">Quantised FPGA CNN accelerator</a></h3>
-          <span class="work-year">2025</span>
-        </div>
-        <p class="work-summary">Implemented a fixed-function MNIST inference pipeline with signed fixed-point arithmetic, reaching 4.7 ms compute latency at 100 MHz and 92.2% accuracy.</p>
+        <a class="work-link" href="/cnn-accelerator/">
+          <span class="work-index">03</span>
+          <div class="work-content">
+            <div class="work-top">
+              <h3 class="work-title">Quantised FPGA CNN accelerator</h3>
+              <span class="work-year">2025</span>
+            </div>
+            <p class="work-summary">Implemented a fixed-function MNIST inference pipeline with signed fixed-point arithmetic, reaching 4.7 ms compute latency at 100 MHz and 92.2% accuracy.</p>
+            <div class="work-tags"><span>SystemVerilog</span><span>Fixed point</span><span>CNN</span></div>
+          </div>
+          <span class="work-arrow" aria-hidden="true">↗</span>
+        </a>
       </article>
 
       <article class="work-row">
-        <div class="work-top">
-          <h3 class="work-title"><a href="/market_data_parser/">FPGA market-data parser</a></h3>
-          <span class="work-year">2025</span>
-        </div>
-        <p class="work-summary">Implemented a cycle-accurate NASDAQ ITCH ingestion pipeline with Ethernet framing, CRC verification, and backpressure-safe parsing in 38 cycles.</p>
+        <a class="work-link" href="/market_data_parser/">
+          <span class="work-index">04</span>
+          <div class="work-content">
+            <div class="work-top">
+              <h3 class="work-title">FPGA market-data parser</h3>
+              <span class="work-year">2025</span>
+            </div>
+            <p class="work-summary">Implemented a cycle-accurate NASDAQ ITCH ingestion pipeline with Ethernet framing, CRC verification, and backpressure-safe parsing in 38 cycles.</p>
+            <div class="work-tags"><span>Low latency</span><span>Networking</span><span>RTL</span></div>
+          </div>
+          <span class="work-arrow" aria-hidden="true">↗</span>
+        </a>
       </article>
     </div>
   </section>
@@ -136,7 +177,10 @@
       <footer class="site-footer">
   <div class="container">
     <div class="footer-inner">
-      <span>© 2026 Keelan Reilly</span>
+      <div class="footer-identity">
+        <span>© 2026 Keelan Reilly</span>
+        <span class="footer-meta">MSc Microelectronics · TU Delft</span>
+      </div>
       <div class="footer-links">
         <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
         <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
@@ -146,5 +190,23 @@
 </footer>
 
     </div>
+    <script>
+      (function () {
+        var button = document.getElementById('theme-toggle');
+        if (!button) return;
+        function updateLabel() {
+          var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+          button.setAttribute('aria-label', 'Switch to ' + next + ' theme');
+        }
+        updateLabel();
+        button.addEventListener('click', function () {
+          var current = document.documentElement.dataset.theme;
+          var next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.dataset.theme = next;
+          localStorage.setItem('theme', next);
+          updateLabel();
+        });
+      })();
+    </script>
   </body>
 </html>

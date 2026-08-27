@@ -4,7 +4,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&amp;family=Manrope:wght@400;500;600;700&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&amp;display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var saved = localStorage.getItem('theme');
+    var preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = saved || preferred;
+  })();
+</script>
 <title>
   FPGA Market Data Parser (Low-Latency Pipeline) — Keelan Reilly
 </title>
@@ -30,6 +37,10 @@
             <div class="nav-links">
               <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
               <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
+              <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch colour theme">
+                <span class="theme-toggle-icon" aria-hidden="true"></span>
+                <span class="theme-toggle-label">Theme</span>
+              </button>
             </div>
           </div>
         </div>
@@ -39,18 +50,14 @@
 <div class="container">
   <div class="article-wrap">
 
-    <a class="back-link" href="/">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polyline points="15 18 9 12 15 6"></polyline>
-      </svg>
-      All projects
-    </a>
+    <a class="back-link" href="/"><span aria-hidden="true">←</span> All projects</a>
 
-    <h1 class="article-title">FPGA Market Data Parser (Low-Latency Pipeline)</h1>
+    <header class="article-header">
+      <p class="article-kicker">Project notes <span>·</span> 2025</p>
+      <h1 class="article-title">FPGA Market Data Parser (Low-Latency Pipeline)</h1>
 
-    
       <p class="article-summary">This project implements a low-latency market data ingestion pipeline in SystemVerilog. I built it to understand how protocol handling, backpressure, and control timing shape end-to-end latency in real hardware pipelines.</p>
-    
+    </header>
 
     
       <div class="kpi-grid">
@@ -110,10 +117,7 @@
 
     
       <a class="repo-link" href="https://github.com/Keelan-Reilly/low_latency_market_parser" target="_blank" rel="noopener">
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.1.82-.26.82-.58v-2.03c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.13 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.57C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/>
-        </svg>
-        View source on GitHub
+        View source on GitHub <span aria-hidden="true">↗</span>
       </a>
     
 
@@ -124,7 +128,10 @@
       <footer class="site-footer">
   <div class="container">
     <div class="footer-inner">
-      <span>© 2026 Keelan Reilly</span>
+      <div class="footer-identity">
+        <span>© 2026 Keelan Reilly</span>
+        <span class="footer-meta">MSc Microelectronics · TU Delft</span>
+      </div>
       <div class="footer-links">
         <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
         <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
@@ -134,5 +141,23 @@
 </footer>
 
     </div>
+    <script>
+      (function () {
+        var button = document.getElementById('theme-toggle');
+        if (!button) return;
+        function updateLabel() {
+          var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+          button.setAttribute('aria-label', 'Switch to ' + next + ' theme');
+        }
+        updateLabel();
+        button.addEventListener('click', function () {
+          var current = document.documentElement.dataset.theme;
+          var next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.dataset.theme = next;
+          localStorage.setItem('theme', next);
+          updateLabel();
+        });
+      })();
+    </script>
   </body>
 </html>
