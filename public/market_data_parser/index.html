@@ -5,13 +5,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&amp;family=Manrope:wght@400;500;600;700&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&amp;display=swap" rel="stylesheet">
-<script>
-  (function () {
-    var saved = localStorage.getItem('theme');
-    var preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.dataset.theme = saved || preferred;
-  })();
-</script>
 <title>
   FPGA Market Data Parser (Low-Latency Pipeline) — Keelan Reilly
 </title>
@@ -37,10 +30,6 @@
             <div class="nav-links">
               <a href="https://github.com/Keelan-Reilly" target="_blank" rel="noopener">GitHub</a>
               <a href="https://www.linkedin.com/in/keelan-reilly-b22b5a296" target="_blank" rel="noopener">LinkedIn</a>
-              <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch colour theme">
-                <span class="theme-toggle-icon" aria-hidden="true"></span>
-                <span class="theme-toggle-label">Theme</span>
-              </button>
             </div>
           </div>
         </div>
@@ -141,23 +130,5 @@
 </footer>
 
     </div>
-    <script>
-      (function () {
-        var button = document.getElementById('theme-toggle');
-        if (!button) return;
-        function updateLabel() {
-          var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-          button.setAttribute('aria-label', 'Switch to ' + next + ' theme');
-        }
-        updateLabel();
-        button.addEventListener('click', function () {
-          var current = document.documentElement.dataset.theme;
-          var next = current === 'dark' ? 'light' : 'dark';
-          document.documentElement.dataset.theme = next;
-          localStorage.setItem('theme', next);
-          updateLabel();
-        });
-      })();
-    </script>
   </body>
 </html>
